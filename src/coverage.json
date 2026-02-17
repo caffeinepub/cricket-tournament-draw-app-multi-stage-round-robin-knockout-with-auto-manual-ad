@@ -1,0 +1,124 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-17T13:01:08.352Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 5,
+    "implemented": 5,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Implement per-round-robin-stage advancement rules so that each round-robin stage can independently define where the winner and runner-up advance (either into a specific knockout entry point such as Pre-Quarterfinal/Quarterfinal/Semifinal, or into the next round-robin stage).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/tournament/types.ts",
+          "frontend/src/features/tournament/generation.ts",
+          "frontend/src/features/tournament/qualification.ts",
+          "frontend/src/features/tournament/useTournamentStore.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/types.ts",
+          "frontend/src/features/tournament/generation.ts",
+          "frontend/src/features/tournament/qualification.ts",
+          "frontend/src/features/tournament/useTournamentStore.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Correct qualification and counting logic to match the user’s examples, including multi-stage routing (e.g., winners from Round Robin 1 directly to knockout + winners from Round Robin 2 to knockout, with Round Robin 2 being composed of Round Robin 1 runner-ups).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/tournament/qualification.ts",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/qualification.ts",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Enforce “only valid” progression combinations by validating that the number of knockout-qualified teams exactly matches the first enabled knockout round size (16 for Pre-Quarterfinal, 8 for Quarterfinal, 4 for Semifinal, 2 for Final), and block tournament generation when invalid (no auto-byes).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/tournament/validation.ts",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/features/tournament/knockoutGenerator.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/validation.ts",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/features/tournament/knockoutGenerator.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Update knockout bracket generation so it does not simulate winners to populate later knockout rounds; instead, generate a manually adjustable bracket where match participants can be manually assigned/changed, consistent with the requirement that the knockout bracket is manually adjustable.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/tournament/types.ts",
+          "frontend/src/features/tournament/knockoutGenerator.ts",
+          "frontend/src/components/KnockoutPairingEditor.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/types.ts",
+          "frontend/src/features/tournament/knockoutGenerator.ts",
+          "frontend/src/components/KnockoutPairingEditor.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Implement the missing UI components for configuring per-stage advancement and (if needed) stage-to-stage group assignment so the user can fully define: number of teams, number of round-robin stages, groups per stage, and per-stage advancement routing for winner/runner-up.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdvancementConfigDialog.tsx",
+          "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/features/tournament/useTournamentStore.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdvancementConfigDialog.tsx",
+          "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+          "frontend/src/pages/TournamentSetupPage.tsx",
+          "frontend/src/features/tournament/useTournamentStore.ts"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AdvancementConfigDialog.tsx",
+    "frontend/src/components/KnockoutPairingEditor.tsx",
+    "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/features/tournament/generation.ts",
+    "frontend/src/features/tournament/knockoutGenerator.ts",
+    "frontend/src/features/tournament/matchCount.ts",
+    "frontend/src/features/tournament/qualification.ts",
+    "frontend/src/features/tournament/types.ts",
+    "frontend/src/features/tournament/useTournamentStore.ts",
+    "frontend/src/features/tournament/validation.ts",
+    "frontend/src/pages/KnockoutPage.tsx",
+    "frontend/src/pages/TournamentSetupPage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

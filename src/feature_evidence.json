@@ -1,0 +1,108 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-implement-per-round-robin-stage-advancement-rules-so-that-each-round-robin-stage-can-independently-define-where-the-winner-and-runner-up-advance-either-into-a-specific-knockout-entry-point-such-as-pre-quarterfinal-quarterfinal-semifinal-or-into-the-next-round-robin-stage",
+      "featureTitle": "Implement per-round-robin-stage advancement rules so that each round-robin stage can independently define where the winner and runner-up advance (either into a specific knockout entry point such as Pre-Quarterfinal/Quarterfinal/Semifinal, or into the next round-robin stage).",
+      "files": [
+        "frontend/src/features/tournament/generation.ts",
+        "frontend/src/features/tournament/qualification.ts",
+        "frontend/src/features/tournament/types.ts",
+        "frontend/src/features/tournament/useTournamentStore.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-correct-qualification-and-counting-logic-to-match-the-user-s-examples-including-multi-stage-routing-e-g-winners-from-round-robin-1-directly-to-knockout-winners-from-round-robin-2-to-knockout-with-round-robin-2-being-composed-of-round-robin-1-runner-ups",
+      "featureTitle": "Correct qualification and counting logic to match the user’s examples, including multi-stage routing (e.g., winners from Round Robin 1 directly to knockout + winners from Round Robin 2 to knockout, with Round Robin 2 being composed of Round Robin 1 runner-ups).",
+      "files": [
+        "frontend/src/features/tournament/qualification.ts",
+        "frontend/src/pages/KnockoutPage.tsx",
+        "frontend/src/pages/TournamentSetupPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enforce-only-valid-progression-combinations-by-validating-that-the-number-of-knockout-qualified-teams-exactly-matches-the-first-enabled-knockout-round-size-16-for-pre-quarterfinal-8-for-quarterfinal-4-for-semifinal-2-for-final-and-block-tournament-generation-when-invalid-no-auto-byes",
+      "featureTitle": "Enforce “only valid” progression combinations by validating that the number of knockout-qualified teams exactly matches the first enabled knockout round size (16 for Pre-Quarterfinal, 8 for Quarterfinal, 4 for Semifinal, 2 for Final), and block tournament generation when invalid (no auto-byes).",
+      "files": [
+        "frontend/src/features/tournament/knockoutGenerator.ts",
+        "frontend/src/features/tournament/validation.ts",
+        "frontend/src/pages/TournamentSetupPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-knockout-bracket-generation-so-it-does-not-simulate-winners-to-populate-later-knockout-rounds-instead-generate-a-manually-adjustable-bracket-where-match-participants-can-be-manually-assigned-changed-consistent-with-the-requirement-that-the-knockout-bracket-is-manually-adjustable",
+      "featureTitle": "Update knockout bracket generation so it does not simulate winners to populate later knockout rounds; instead, generate a manually adjustable bracket where match participants can be manually assigned/changed, consistent with the requirement that the knockout bracket is manually adjustable.",
+      "files": [
+        "frontend/src/components/KnockoutPairingEditor.tsx",
+        "frontend/src/features/tournament/knockoutGenerator.ts",
+        "frontend/src/features/tournament/types.ts",
+        "frontend/src/pages/KnockoutPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-the-missing-ui-components-for-configuring-per-stage-advancement-and-if-needed-stage-to-stage-group-assignment-so-the-user-can-fully-define-number-of-teams-number-of-round-robin-stages-groups-per-stage-and-per-stage-advancement-routing-for-winner-runner-up",
+      "featureTitle": "Implement the missing UI components for configuring per-stage advancement and (if needed) stage-to-stage group assignment so the user can fully define: number of teams, number of round-robin stages, groups per stage, and per-stage advancement routing for winner/runner-up.",
+      "files": [
+        "frontend/src/components/AdvancementConfigDialog.tsx",
+        "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+        "frontend/src/features/tournament/useTournamentStore.ts",
+        "frontend/src/pages/TournamentSetupPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

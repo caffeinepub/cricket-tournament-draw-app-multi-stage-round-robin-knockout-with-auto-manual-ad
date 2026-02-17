@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Tournament management app with configurable multi-stage round-robin groups and rules-based advancement into manually adjustable knockout brackets, enforcing only valid progression structures.",
+  "architectural_notes": [
+    "Per round-robin stage: user-defined group count and advancement rules (not global).",
+    "System must enforce only valid team progression structures; do not auto-add byes to fix invalid sizes.",
+    "Knockout bracket should be manually adjustable by the user after qualifiers are determined."
+  ],
+  "known_issues": [
+    "Advancement logic currently incorrect for multi-stage round-robin to knockout scenarios (per user examples)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-implement-per-round-robin-stage-advancement-rules-so-that-each-round-robin-stage-can-independently-define-where-the-winner-and-runner-up-advance-either-into-a-specific-knockout-entry-point-such-as-pre-quarterfinal-quarterfinal-semifinal-or-into-the-next-round-robin-stage",
+      "title": "Implement per-round-robin-stage advancement rules so that each round-robin stage can independently define where the winner and runner-up advance (either into a specific knockout entry point such as Pre-Quarterfinal/Quarterfinal/Semifinal, or into the next round-robin stage).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-correct-qualification-and-counting-logic-to-match-the-user-s-examples-including-multi-stage-routing-e-g-winners-from-round-robin-1-directly-to-knockout-winners-from-round-robin-2-to-knockout-with-round-robin-2-being-composed-of-round-robin-1-runner-ups",
+      "title": "Correct qualification and counting logic to match the user’s examples, including multi-stage routing (e.g., winners from Round Robin 1 directly to knockout + winners from Round Robin 2 to knockout, with Round Robin 2 being composed of Round Robin 1 runner-ups).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enforce-only-valid-progression-combinations-by-validating-that-the-number-of-knockout-qualified-teams-exactly-matches-the-first-enabled-knockout-round-size-16-for-pre-quarterfinal-8-for-quarterfinal-4-for-semifinal-2-for-final-and-block-tournament-generation-when-invalid-no-auto-byes",
+      "title": "Enforce “only valid” progression combinations by validating that the number of knockout-qualified teams exactly matches the first enabled knockout round size (16 for Pre-Quarterfinal, 8 for Quarterfinal, 4 for Semifinal, 2 for Final), and block tournament generation when invalid (no auto-byes).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-knockout-bracket-generation-so-it-does-not-simulate-winners-to-populate-later-knockout-rounds-instead-generate-a-manually-adjustable-bracket-where-match-participants-can-be-manually-assigned-changed-consistent-with-the-requirement-that-the-knockout-bracket-is-manually-adjustable",
+      "title": "Update knockout bracket generation so it does not simulate winners to populate later knockout rounds; instead, generate a manually adjustable bracket where match participants can be manually assigned/changed, consistent with the requirement that the knockout bracket is manually adjustable.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-missing-ui-components-for-configuring-per-stage-advancement-and-if-needed-stage-to-stage-group-assignment-so-the-user-can-fully-define-number-of-teams-number-of-round-robin-stages-groups-per-stage-and-per-stage-advancement-routing-for-winner-runner-up",
+      "title": "Implement the missing UI components for configuring per-stage advancement and (if needed) stage-to-stage group assignment so the user can fully define: number of teams, number of round-robin stages, groups per stage, and per-stage advancement routing for winner/runner-up.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Allow manual entry of tournament setup: number of teams, number of round-robin stages, and number of groups per round-robin stage.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Support per-round-robin-stage advancement rules (e.g., winner/runner-up advancing to specific knockout stage or to next round-robin stage).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Validate and enforce only valid progression combinations (no auto-byes); prevent configurations that don't produce valid knockout sizes.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Provide manually adjustable knockout bracket generation/management for pre-quarter/quarter/semi/final stages based on qualified teams.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Tournament Bracket Manager",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

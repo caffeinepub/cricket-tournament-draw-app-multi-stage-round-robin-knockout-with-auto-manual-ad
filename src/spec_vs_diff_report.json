@@ -1,0 +1,55 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-17T13:01:08.348Z",
+  "summary": "Diff implements per-stage (winner/runner-up) advancement routing across multi-stage round robin, shared knockout qualification/counting logic, strict validation against the first enabled knockout round size (no byes), and knockout bracket generation that only seeds the first enabled round while later rounds are placeholders. It also adds UI for configuring advancement and previewing stage flow, plus a manual pairing editor for the first knockout round.",
+  "missing_requirements": [
+    {
+      "id": "REQ-4",
+      "requirement": "Allow manual assignment/adjustment of teams for knockout matches ideally for all rounds that exist (beyond the first enabled round).",
+      "reason": "The diff evidence shows manual assignment UI and logic focused on the first enabled knockout round; subsequent rounds are generated as placeholders, but there is no clear evidence of UI to manually assign participants for those later-round placeholder matches.",
+      "evidence": [
+        "frontend/src/components/KnockoutPairingEditor.tsx (filters to firstRoundMatches and describes \"first knockout round\")",
+        "frontend/src/features/tournament/knockoutGenerator.ts (generates placeholders for later rounds via generatePlaceholderRound)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Backend migration scaffolding and new backend storage/maps for groups/stages/roundRobinStages.",
+      "reason": "BuildRequest constraints said backend changes only if needed; the request is primarily about frontend advancement/validation/bracket behavior. The diff introduces a new migration module and backend data structures/endpoints without clear linkage from the diff summary to the required frontend fixes.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Knockout pairing mode toggle between auto and manual.",
+      "reason": "REQ-4 requires a manually adjustable bracket and explicitly disallows auto-advancing teams by simulating winners; it does not request an 'auto pairing mode' feature. The diff adds an explicit auto/manual pairing mode UI and store state.",
+      "evidence": [
+        "frontend/src/components/KnockoutPairingEditor.tsx",
+        "frontend/src/features/tournament/types.ts (KnockoutPairingMode)",
+        "frontend/src/features/tournament/useTournamentStore.ts (knockoutPairingMode)"
+      ]
+    }
+  ],
+  "confidence": 0.74,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/AdvancementConfigDialog.tsx",
+    "frontend/src/components/KnockoutPairingEditor.tsx",
+    "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+    "frontend/src/features/tournament/generation.ts",
+    "frontend/src/features/tournament/knockoutGenerator.ts",
+    "frontend/src/features/tournament/matchCount.ts",
+    "frontend/src/features/tournament/qualification.ts",
+    "frontend/src/features/tournament/types.ts",
+    "frontend/src/features/tournament/useTournamentStore.ts",
+    "frontend/src/features/tournament/validation.ts",
+    "frontend/src/pages/KnockoutPage.tsx",
+    "frontend/src/pages/TournamentSetupPage.tsx",
+    "project_state.json"
+  ]
+}
