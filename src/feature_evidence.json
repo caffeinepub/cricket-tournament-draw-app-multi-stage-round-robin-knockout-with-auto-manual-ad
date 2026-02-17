@@ -2,13 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-per-round-robin-stage-advancement-rules-so-that-each-round-robin-stage-can-independently-define-where-the-winner-and-runner-up-advance-either-into-a-specific-knockout-entry-point-such-as-pre-quarterfinal-quarterfinal-semifinal-or-into-the-next-round-robin-stage",
-      "featureTitle": "Implement per-round-robin-stage advancement rules so that each round-robin stage can independently define where the winner and runner-up advance (either into a specific knockout entry point such as Pre-Quarterfinal/Quarterfinal/Semifinal, or into the next round-robin stage).",
+      "featureId": "feature-add-a-tournament-setup-preset-for-the-requested-group-advancement-structure-round-robin-1-has-12-groups-a-l-where-group-winners-a1-l1-advance-to-knockout-pre-quarterfinals-and-group-runners-up-a2-l2-advance-to-round-robin-2-round-robin-2-has-4-groups-m-p-where-group-winners-m1-p1-advance-to-knockout-pre-quarterfinals-and-round-robin-2-runners-up-are-eliminated",
+      "featureTitle": "Add a tournament setup preset for the requested group/advancement structure: Round-robin 1 has 12 groups (A–L) where group winners (A1–L1) advance to Knockout → Pre-Quarterfinals, and group runners-up (A2–L2) advance to Round-robin 2; Round-robin 2 has 4 groups (M–P) where group winners (M1–P1) advance to Knockout → Pre-Quarterfinals, and Round-robin 2 runners-up are eliminated.",
       "files": [
-        "frontend/src/features/tournament/generation.ts",
-        "frontend/src/features/tournament/qualification.ts",
-        "frontend/src/features/tournament/types.ts",
-        "frontend/src/features/tournament/useTournamentStore.ts"
+        "frontend/src/features/tournament/useTournamentStore.ts",
+        "frontend/src/pages/TournamentSetupPage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -23,12 +21,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-correct-qualification-and-counting-logic-to-match-the-user-s-examples-including-multi-stage-routing-e-g-winners-from-round-robin-1-directly-to-knockout-winners-from-round-robin-2-to-knockout-with-round-robin-2-being-composed-of-round-robin-1-runner-ups",
-      "featureTitle": "Correct qualification and counting logic to match the user’s examples, including multi-stage routing (e.g., winners from Round Robin 1 directly to knockout + winners from Round Robin 2 to knockout, with Round Robin 2 being composed of Round Robin 1 runner-ups).",
+      "featureId": "feature-update-round-robin-group-naming-so-that-group-letters-continue-across-round-robin-stages-instead-of-restarting-at-a-each-stage-producing-round-1-group-names-a-l-for-12-groups-and-round-2-group-names-m-p-for-4-groups-in-this-configuration",
+      "featureTitle": "Update round-robin group naming so that group letters continue across round-robin stages (instead of restarting at A each stage), producing Round 1 group names A–L for 12 groups and Round 2 group names M–P for 4 groups in this configuration.",
       "files": [
-        "frontend/src/features/tournament/qualification.ts",
-        "frontend/src/pages/KnockoutPage.tsx",
-        "frontend/src/pages/TournamentSetupPage.tsx"
+        "frontend/src/features/tournament/generation.ts",
+        "frontend/src/features/tournament/groupNaming.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -43,12 +40,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-enforce-only-valid-progression-combinations-by-validating-that-the-number-of-knockout-qualified-teams-exactly-matches-the-first-enabled-knockout-round-size-16-for-pre-quarterfinal-8-for-quarterfinal-4-for-semifinal-2-for-final-and-block-tournament-generation-when-invalid-no-auto-byes",
-      "featureTitle": "Enforce “only valid” progression combinations by validating that the number of knockout-qualified teams exactly matches the first enabled knockout round size (16 for Pre-Quarterfinal, 8 for Quarterfinal, 4 for Semifinal, 2 for Final), and block tournament generation when invalid (no auto-byes).",
+      "featureId": "feature-fix-user-facing-advancement-destination-labels-so-that-a-nextstage-destination-displays-the-actual-robin-round-number-it-points-to-e-g-robin-round-2-and-does-not-display-an-incorrect-round-x-value-derived-by-adding-1-to-the-stage-number",
+      "featureTitle": "Fix user-facing advancement destination labels so that a NextStage destination displays the actual robin round number it points to (e.g., “Robin Round 2”), and does not display an incorrect “Round X” value derived by adding 1 to the stage number.",
       "files": [
-        "frontend/src/features/tournament/knockoutGenerator.ts",
-        "frontend/src/features/tournament/validation.ts",
-        "frontend/src/pages/TournamentSetupPage.tsx"
+        "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
+        "frontend/src/features/tournament/validation.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -59,48 +55,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-knockout-bracket-generation-so-it-does-not-simulate-winners-to-populate-later-knockout-rounds-instead-generate-a-manually-adjustable-bracket-where-match-participants-can-be-manually-assigned-changed-consistent-with-the-requirement-that-the-knockout-bracket-is-manually-adjustable",
-      "featureTitle": "Update knockout bracket generation so it does not simulate winners to populate later knockout rounds; instead, generate a manually adjustable bracket where match participants can be manually assigned/changed, consistent with the requirement that the knockout bracket is manually adjustable.",
-      "files": [
-        "frontend/src/components/KnockoutPairingEditor.tsx",
-        "frontend/src/features/tournament/knockoutGenerator.ts",
-        "frontend/src/features/tournament/types.ts",
-        "frontend/src/pages/KnockoutPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-the-missing-ui-components-for-configuring-per-stage-advancement-and-if-needed-stage-to-stage-group-assignment-so-the-user-can-fully-define-number-of-teams-number-of-round-robin-stages-groups-per-stage-and-per-stage-advancement-routing-for-winner-runner-up",
-      "featureTitle": "Implement the missing UI components for configuring per-stage advancement and (if needed) stage-to-stage group assignment so the user can fully define: number of teams, number of round-robin stages, groups per stage, and per-stage advancement routing for winner/runner-up.",
-      "files": [
-        "frontend/src/components/AdvancementConfigDialog.tsx",
-        "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
-        "frontend/src/features/tournament/useTournamentStore.ts",
-        "frontend/src/pages/TournamentSetupPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }

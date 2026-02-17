@@ -1,151 +1,65 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Tournament Bracket Manager: Per-stage advancement routing, valid knockout qualification, and manual knockout bracket placeholders",
+  "title": "12-group Round 1 → Round 2 → Pre-Quarterfinals preset, sequential group lettering, and correct advancement labels",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add per-round-robin-stage advancement routing so each stage can send winners/runner-ups to either a knockout entry round or the next round-robin stage, with correct team flow between stages.",
+      "summary": "Add a Tournament Setup preset that configures 2 round-robin stages (12 groups then 4 groups) with winners/runners-up advancing per the specified Round 1→Round 2→Pre-Quarterfinals rule.",
       "acceptanceCriteria": [
-        "In the setup UI, each round-robin stage has its own advancement configuration (at minimum: Winner destination and Runner-up destination).",
-        "It is possible to configure: winners from Round Robin 1 advance to a knockout stage while runner-ups advance to Round Robin 2.",
-        "If a destination is set to “next round-robin”, only those teams are used as the input team pool for generating the next round-robin stage.",
-        "If a destination is set to “knockout”, those teams are included in the knockout-qualified pool without being included in subsequent round-robin stages."
+        "In Tournament Setup, the user can apply a preset that configures: (1) number of robin rounds = 2, (2) Round 1 group count = 12, (3) Round 2 group count = 4, (4) knockout stages enabled includes Pre-Quarterfinals, (5) stage advancement config for Round 1: winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2), (6) stage advancement config for Round 2: winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated.",
+        "After applying the preset and generating, the qualified team count shown in setup equals 16 (12 Round 1 winners + 4 Round 2 winners) and passes existing compatibility validation for Pre-Quarterfinals."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/types.ts",
+          "path": "frontend/src/pages/TournamentSetupPage.tsx",
           "operation": "modify",
-          "description": "Introduce per-stage advancement types (e.g., winner/runner-up destinations as either NextStage(stageIndex) or KnockoutEntry(PreQuarterfinals/Quarterfinals/Semifinals)) and update tournament config/state types to store stage-specific advancement instead of a single global advancementRule."
-        },
-        {
-          "path": "frontend/src/features/tournament/generation.ts",
-          "operation": "modify",
-          "description": "Update multi-stage round-robin generation to compute each stage’s advancing teams based on that stage’s configured winner/runner-up destinations; ensure only NextStage-routed teams become the input pool for the next stage and Knockout-routed teams are excluded from later stage pools."
-        },
-        {
-          "path": "frontend/src/features/tournament/qualification.ts",
-          "operation": "modify",
-          "description": "Replace global-rule-based qualification with shared utilities that (1) compute per-stage routed teams and (2) aggregate the overall knockout-qualified pool across all configured stages based on per-stage destinations."
+          "description": "Add a preset control in Tournament Setup to apply the requested configuration: set robin rounds to 2, group counts to 12 (Round 1) and 4 (Round 2), enable Pre-Quarterfinals knockout stage, and set stageAdvancementConfigs to: Stage 1 winners→KnockoutEntry(PreQuarterfinals) + runners-up→NextStage(2); Stage 2 winners→KnockoutEntry(PreQuarterfinals) + runners-up→Eliminated. Ensure all user-facing text is English. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/features/tournament/useTournamentStore.ts",
           "operation": "modify",
-          "description": "Add store fields/actions for per-stage advancement configuration (winner/runner-up destinations) and ensure tournament generation/regeneration uses the per-stage model for stage creation and knockout-qualified pool derivation."
+          "description": "Ensure TournamentSetupPage can update all store fields required by the preset (including stageAdvancementConfigs and knockoutStages) in a single user action, without changing any backend behavior."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Fix knockout qualification counting to match multi-stage routing examples and ensure all UI uses the same shared qualification logic.",
+      "summary": "Make round-robin group letters sequential across stages (e.g., A–L then M–P) instead of restarting at A for each stage.",
       "acceptanceCriteria": [
-        "For 48 teams, 2 round-robin rounds, Round 1 groups=12, Round 2 groups=4, with Round 1 winners routed to Pre-Quarterfinal and Round 1 runner-ups routed to Round 2, and Round 2 winners routed to Pre-Quarterfinal: the app reports exactly 16 knockout-qualified teams (12 + 4).",
-        "For 16 teams, 1 round-robin round, 4 groups, with winners+runner-ups routed to Quarterfinal: the app reports exactly 8 knockout-qualified teams.",
-        "The displayed “Qualified for Knockout” count on both setup summary and knockout page is computed by the same shared logic (no duplicated or conflicting formulas)."
+        "When generating multiple round-robin stages, group names are unique and sequential across stages (e.g., if Stage 1 has 12 groups named A–L, then Stage 2 group names start at M).",
+        "Stage group names shown in the schedule views and group tables match the sequential naming (A–L then M–P for the preset configuration)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/qualification.ts",
+          "path": "frontend/src/features/tournament/groupNaming.ts",
           "operation": "modify",
-          "description": "Implement a single source of truth for (a) knockout-qualified team list and (b) knockout-qualified team count derived from the per-stage advancement configuration (including multi-stage routing and aggregation across stages)."
+          "description": "Extend group naming utilities to support generating names by a global group index (or with an offset), while keeping the existing exported function(s) working for current callers."
         },
         {
-          "path": "frontend/src/pages/TournamentSetupPage.tsx",
+          "path": "frontend/src/features/tournament/generation.ts",
           "operation": "modify",
-          "description": "Remove any local/duplicated ‘qualified team count’ formulas and instead display the knockout-qualified count from the shared qualification utility; ensure the setup summary reflects multi-stage routing (e.g., RR1 winners to knockout + RR2 winners to knockout). Use shadcn-ui components already present; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/KnockoutPage.tsx",
-          "operation": "modify",
-          "description": "Update the Knockout page’s ‘Qualified for Knockout’ display to use the same shared qualification utility as the setup page (count and/or list), ensuring consistent numbers across pages. Use shadcn-ui components already present; verify the component's usage instructions before implementing."
+          "description": "Update round-robin stage generation to compute a per-stage group-name offset (sum of prior stage group counts) and use it so later stages continue lettering from prior stages (e.g., Stage 2 starts at M after 12 groups A–L)."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Validate that the knockout-qualified team count exactly matches the first enabled knockout round size and block generation when invalid (no byes), including multi-stage routing.",
+      "summary": "Fix advancement destination labels so NextStage shows the actual target robin round number (e.g., 'Robin Round 2') rather than an incorrect derived value.",
       "acceptanceCriteria": [
-        "If the configured advancement routing produces a knockout-qualified team count that does not equal the required count for the first enabled knockout stage, the UI shows an error explaining the mismatch and prevents generation.",
-        "No automatic byes are created or implied to reconcile mismatched counts.",
-        "Validation accounts for multi-stage routing (teams routed to knockout from earlier round-robin stages are included)."
+        "Wherever advancement destinations are displayed (e.g., the setup page’s advancement summary and the stage flow preview), a winner/runner-up destination of {type:'NextStage', stageIndex: 2} is displayed as 'Robin Round 2' (or equivalent clearly correct text).",
+        "Knockout entry destinations continue to display as Pre-Quarterfinals/Quarterfinals/Semifinals as they do now."
       ],
       "file_operations": [
         {
           "path": "frontend/src/features/tournament/validation.ts",
           "operation": "modify",
-          "description": "Refactor advancement/knockout compatibility validation to compute the knockout-qualified team count via the shared per-stage qualification utility and enforce exact match with the first enabled knockout round (16/8/4/2), rejecting mismatches without byes."
-        },
-        {
-          "path": "frontend/src/pages/TournamentSetupPage.tsx",
-          "operation": "modify",
-          "description": "Ensure ‘Generate Tournament’ is blocked when validation fails and the user sees a clear English error message describing the mismatch (qualified vs required) based on the shared validation helper. Use shadcn-ui Alert/Badge components already present; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/tournament/knockoutGenerator.ts",
-          "operation": "modify",
-          "description": "Ensure knockout match generation does not attempt to reconcile invalid team counts (no slicing to fit or implied byes) and relies on upstream validation; generation should still be robust if invoked with invalid counts (e.g., produce empty/partial first round without crashing)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Generate a manual, adjustable knockout bracket that only pre-populates the first enabled round and leaves later rounds as placeholders without simulated winners.",
-      "acceptanceCriteria": [
-        "When generating knockout matches, only the first enabled knockout round is pre-populated from the knockout-qualified team pool; subsequent rounds are generated as bracket placeholders and are not auto-filled using a fake “winner = team1” assumption.",
-        "The UI allows manual assignment/adjustment of teams for knockout matches (at least for the first enabled round; ideally for all rounds that exist).",
-        "No match display crashes when a later-round participant is not yet known (e.g., UI renders a placeholder such as “TBD”)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/features/tournament/types.ts",
-          "operation": "modify",
-          "description": "Allow knockout match participants to be unknown by introducing a consistent placeholder strategy (e.g., a sentinel Team like ‘TBD’ or optional participants) that the UI can render safely for later rounds."
-        },
-        {
-          "path": "frontend/src/features/tournament/knockoutGenerator.ts",
-          "operation": "modify",
-          "description": "Update knockout bracket generation to: (1) pre-populate only the first enabled knockout round from the knockout-qualified team pool, and (2) generate subsequent enabled rounds as placeholder matches with unknown participants (no winner simulation/auto-advance)."
-        },
-        {
-          "path": "frontend/src/components/KnockoutPairingEditor.tsx",
-          "operation": "modify",
-          "description": "Expand manual assignment support beyond the first round where feasible (while still meeting the ‘at least first round’ requirement), and ensure selectors handle placeholder participants without crashing. Use existing shadcn-ui Select/Card components; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/KnockoutPage.tsx",
-          "operation": "modify",
-          "description": "Render later-round matches safely when participants are unknown (e.g., display ‘TBD’) and ensure match lists don’t crash when placeholders are present. Use existing shadcn-ui Card/Badge/Separator components; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Replace placeholder setup UI for per-stage advancement (and stage-to-stage assignment preview if needed) so users can fully configure teams, stages, groups per stage, and stage-specific winner/runner-up routing in English.",
-      "acceptanceCriteria": [
-        "The tournament setup page supports manual entry of: number of teams, number of round-robin stages, and number of groups for each round-robin stage (existing behavior retained).",
-        "The previously empty placeholder components (frontend/src/components/AdvancementConfigDialog.tsx and frontend/src/components/Stage2GroupAssignmentPanel.tsx) are replaced with working UI (or removed from usage if not needed) so there are no dead/blank screens for advancement configuration.",
-        "All user-facing text in the setup and advancement configuration UI is in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AdvancementConfigDialog.tsx",
-          "operation": "modify",
-          "description": "Implement a working per-stage advancement configuration dialog: select Winner destination and Runner-up destination (Knockout entry or Next round-robin stage) for a chosen stage, and persist changes via the tournament store. Use shadcn-ui Dialog/Select/Button components; verify the component's usage instructions before implementing."
+          "description": "Fix formatting for AdvancementDestination of type NextStage so it renders the actual target stage number (e.g., 'Robin Round 2' for stageIndex=2) and does not compute the display value by adding 1. Keep existing KnockoutEntry and Eliminated labeling behavior correct."
         },
         {
           "path": "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
           "operation": "modify",
-          "description": "Replace the empty placeholder with a working ‘Stage-to-stage team flow preview’ panel (e.g., show how many teams are routed to the next stage vs to knockout for each configured stage); if explicit assignment is not required, keep it as an informational preview to avoid dead UI. Use shadcn-ui Card/Badge/Alert components as appropriate; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/TournamentSetupPage.tsx",
-          "operation": "modify",
-          "description": "Wire the new per-stage advancement configuration UI into setup: for each round-robin stage, provide a way to open AdvancementConfigDialog and review stage routing; include the Stage2GroupAssignmentPanel (or equivalent) when there are multiple stages. Use existing shadcn-ui components already present; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/tournament/useTournamentStore.ts",
-          "operation": "modify",
-          "description": "Add/adjust store actions used by the setup UI to set per-stage advancement routing and to provide derived previews (e.g., per-stage routed counts) needed by Stage2GroupAssignmentPanel."
+          "description": "Verify the stage flow preview uses the corrected destination formatter and displays NextStage destinations with the correct robin round number. Verify the component's usage instructions before implementing."
         }
       ]
     }

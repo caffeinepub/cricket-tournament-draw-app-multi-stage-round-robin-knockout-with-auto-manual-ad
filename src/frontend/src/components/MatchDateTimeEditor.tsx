@@ -3,8 +3,6 @@ import { Match } from '../features/tournament/types';
 import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { validateDateFormat, validateTimeFormat } from '../features/tournament/validation';
-import { toast } from 'sonner';
 
 interface MatchDateTimeEditorProps {
   match: Match;
@@ -17,49 +15,41 @@ export default function MatchDateTimeEditor({ match }: MatchDateTimeEditorProps)
 
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
-    if (newDate && !validateDateFormat(newDate)) {
-      toast.error('Invalid date format. Use YYYY-MM-DD');
-      return;
-    }
-    updateMatchDateTime(match.id, newDate || undefined, time || undefined);
+    updateMatchDateTime(match.id, newDate || '', time || '');
   };
 
   const handleTimeChange = (newTime: string) => {
     setTime(newTime);
-    if (newTime && !validateTimeFormat(newTime)) {
-      toast.error('Invalid time format. Use HH:MM');
-      return;
-    }
-    updateMatchDateTime(match.id, date || undefined, newTime || undefined);
+    updateMatchDateTime(match.id, date || '', newTime || '');
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="space-y-1">
-        <Label htmlFor={`date-${match.id}`} className="sr-only">
-          Date
-        </Label>
-        <Input
-          id={`date-${match.id}`}
-          type="date"
-          value={date}
-          onChange={(e) => handleDateChange(e.target.value)}
-          className="w-[150px]"
-          placeholder="Date"
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor={`time-${match.id}`} className="sr-only">
-          Time
-        </Label>
-        <Input
-          id={`time-${match.id}`}
-          type="time"
-          value={time}
-          onChange={(e) => handleTimeChange(e.target.value)}
-          className="w-[120px]"
-          placeholder="Time"
-        />
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`date-${match.id}`} className="text-xs">
+            Date
+          </Label>
+          <Input
+            id={`date-${match.id}`}
+            type="date"
+            value={date}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor={`time-${match.id}`} className="text-xs">
+            Time
+          </Label>
+          <Input
+            id={`time-${match.id}`}
+            type="time"
+            value={time}
+            onChange={(e) => handleTimeChange(e.target.value)}
+            className="h-8 text-xs"
+          />
+        </div>
       </div>
     </div>
   );

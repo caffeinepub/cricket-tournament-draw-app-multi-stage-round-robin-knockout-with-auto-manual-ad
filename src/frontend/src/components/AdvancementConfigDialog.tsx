@@ -26,7 +26,8 @@ export default function AdvancementConfigDialog({
   const existingConfig = stageAdvancementConfigs.find(c => c.stageNumber === stageNumber);
   
   const [winnerDestType, setWinnerDestType] = useState<'NextStage' | 'KnockoutEntry'>(
-    existingConfig?.winnerDestination.type || 'KnockoutEntry'
+    existingConfig?.winnerDestination.type === 'Eliminated' ? 'KnockoutEntry' : 
+    (existingConfig?.winnerDestination.type || 'KnockoutEntry')
   );
   const [winnerNextStage, setWinnerNextStage] = useState<number>(
     existingConfig?.winnerDestination.type === 'NextStage' 
@@ -39,7 +40,7 @@ export default function AdvancementConfigDialog({
       : 'PreQuarterfinals'
   );
   
-  const [runnerUpDestType, setRunnerUpDestType] = useState<'NextStage' | 'KnockoutEntry'>(
+  const [runnerUpDestType, setRunnerUpDestType] = useState<'NextStage' | 'KnockoutEntry' | 'Eliminated'>(
     existingConfig?.runnerUpDestination.type || 'NextStage'
   );
   const [runnerUpNextStage, setRunnerUpNextStage] = useState<number>(
@@ -55,6 +56,7 @@ export default function AdvancementConfigDialog({
 
   const isLastStage = stageNumber === totalStages;
   const hasNextStage = stageNumber < totalStages;
+  const isStage2 = stageNumber === 2;
 
   const handleSave = () => {
     const winnerDestination: AdvancementDestination = 
@@ -63,7 +65,9 @@ export default function AdvancementConfigDialog({
         : { type: 'KnockoutEntry', entryPoint: winnerKnockoutEntry };
     
     const runnerUpDestination: AdvancementDestination = 
-      runnerUpDestType === 'NextStage'
+      runnerUpDestType === 'Eliminated'
+        ? { type: 'Eliminated' }
+        : runnerUpDestType === 'NextStage'
         ? { type: 'NextStage', stageIndex: runnerUpNextStage }
         : { type: 'KnockoutEntry', entryPoint: runnerUpKnockoutEntry };
     
@@ -158,13 +162,14 @@ export default function AdvancementConfigDialog({
             
             <div className="space-y-2">
               <Label htmlFor="runnerup-dest-type">Advance to</Label>
-              <Select value={runnerUpDestType} onValueChange={(v) => setRunnerUpDestType(v as 'NextStage' | 'KnockoutEntry')}>
+              <Select value={runnerUpDestType} onValueChange={(v) => setRunnerUpDestType(v as 'NextStage' | 'KnockoutEntry' | 'Eliminated')}>
                 <SelectTrigger id="runnerup-dest-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {hasNextStage && <SelectItem value="NextStage">Next Round-Robin Stage</SelectItem>}
                   <SelectItem value="KnockoutEntry">Knockout Stage</SelectItem>
+                  {isStage2 && <SelectItem value="Eliminated">Eliminate</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
@@ -214,6 +219,15 @@ export default function AdvancementConfigDialog({
                 </Select>
               </div>
             )}
+
+            {runnerUpDestType === 'Eliminated' && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Runner-ups from this round will be eliminated and will not advance to any further stages.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <Alert>
@@ -221,6 +235,7 @@ export default function AdvancementConfigDialog({
             <AlertDescription>
               Teams routed to "Next Round-Robin Stage" will participate in that stage's groups. 
               Teams routed to "Knockout Stage" will enter the knockout bracket directly.
+              {isStage2 && " Teams marked as \"Eliminate\" will not advance further."}
             </AlertDescription>
           </Alert>
         </div>

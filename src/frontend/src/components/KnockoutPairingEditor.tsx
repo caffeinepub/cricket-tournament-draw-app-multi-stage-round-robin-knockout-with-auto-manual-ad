@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Shuffle, Lock, Unlock } from 'lucide-react';
 import { getQualifiedTeamsForKnockout } from '../features/tournament/qualification';
+import { getFirstEnabledRound } from '../features/tournament/knockoutRounds';
 
 export default function KnockoutPairingEditor() {
   const {
@@ -22,20 +23,20 @@ export default function KnockoutPairingEditor() {
 
   // Get qualified teams using shared utility
   const qualifiedTeams = useMemo(() => {
-    return getQualifiedTeamsForKnockout(stages, stageAdvancementConfigs, knockoutStages, roundRobinRounds);
+    const teams = getQualifiedTeamsForKnockout(stages, stageAdvancementConfigs, knockoutStages, roundRobinRounds);
+    // Filter out TBD placeholder teams
+    return teams.filter(team => !team.id.startsWith('tbd-'));
   }, [stages, stageAdvancementConfigs, knockoutStages, roundRobinRounds]);
 
-  // Get first round matches (Pre-QF or QF or SF or Final)
+  // Get first round matches using canonical round detection
   const firstRoundMatches = useMemo(() => {
     if (knockoutMatches.length === 0) return [];
     
-    const roundOrder = ['Pre Quarter Final', 'Quarter Final', 'Semi Final', 'Final'];
-    const firstRound = roundOrder.find(round => 
-      knockoutMatches.some(m => m.round === round)
-    );
+    const firstRound = getFirstEnabledRound(knockoutStages);
+    if (!firstRound) return [];
     
-    return knockoutMatches.filter(m => m.round === firstRound && m.team1.id !== 'tbd');
-  }, [knockoutMatches]);
+    return knockoutMatches.filter(m => m.round === firstRound && !m.team1.id.startsWith('tbd-'));
+  }, [knockoutMatches, knockoutStages]);
 
   const handleModeToggle = () => {
     const newMode = knockoutPairingMode === 'auto' ? 'manual' : 'auto';
@@ -45,11 +46,11 @@ export default function KnockoutPairingEditor() {
   const handleTeamAssignment = (matchId: string, position: 'team1' | 'team2', teamId: string) => {
     const currentAssignment = knockoutFixtureAssignments.find(a => a.matchId === matchId);
     
-    assignKnockoutFixture(
+    assignKnockoutFixture({
       matchId,
-      position === 'team1' ? teamId : currentAssignment?.team1Id,
-      position === 'team2' ? teamId : currentAssignment?.team2Id
-    );
+      team1Id: position === 'team1' ? teamId : currentAssignment?.team1Id,
+      team2Id: position === 'team2' ? teamId : currentAssignment?.team2Id,
+    });
   };
 
   if (firstRoundMatches.length === 0) {

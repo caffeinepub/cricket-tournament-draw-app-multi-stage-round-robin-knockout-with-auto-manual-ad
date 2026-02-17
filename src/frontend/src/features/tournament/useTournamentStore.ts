@@ -1,205 +1,188 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { TournamentState, Team, AdvancementConfig, KnockoutStage, RoundRobinRoundConfig, KnockoutPairingMode, KnockoutFixtureAssignment, StageAdvancementConfig } from './types';
-import { generateTournament as generateTournamentStages } from './generation';
-import { generateKnockoutMatches } from './knockoutGenerator';
+import {
+  TournamentState,
+  RoundRobinRoundConfig,
+  KnockoutStage,
+  StageAdvancementConfig,
+  Stage,
+  KnockoutPairingMode,
+  KnockoutFixtureAssignment,
+  Team,
+} from './types';
+import { generateTournament } from './generation';
 
-interface TournamentActions {
+interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   setNumberOfTeams: (count: number) => void;
   setRoundRobinRounds: (rounds: RoundRobinRoundConfig[]) => void;
-  updateRoundConfig: (roundNumber: number, groupCount: number) => void;
-  setStageAdvancementConfig: (config: StageAdvancementConfig) => void;
   setKnockoutStages: (stages: KnockoutStage) => void;
-  setAdvancementConfig: (stageId: string, config: AdvancementConfig) => void;
-  setKnockoutPairingMode: (mode: KnockoutPairingMode) => void;
-  assignKnockoutFixture: (matchId: string, team1Id?: string, team2Id?: string) => void;
+  setStageAdvancementConfigs: (configs: StageAdvancementConfig[]) => void;
+  setStageAdvancementConfig: (config: StageAdvancementConfig) => void;
   generateTournament: () => void;
-  regenerateStage: (stageId: string) => void;
-  regenerateKnockout: () => void;
-  updateMatchDateTime: (matchId: string, date?: string, time?: string) => void;
-  setCurrentView: (view: 'setup' | 'schedule' | 'knockout') => void;
+  updateMatchDateTime: (matchId: string, date: string, time: string) => void;
+  updateTeamName: (teamId: string, newName: string) => void;
+  setCurrentView: (view: 'setup' | 'schedule' | 'fullSchedule' | 'knockout') => void;
+  setKnockoutPairingMode: (mode: KnockoutPairingMode) => void;
+  assignKnockoutFixture: (assignment: KnockoutFixtureAssignment) => void;
   reset: () => void;
 }
 
-const initialState: TournamentState = {
-  teams: [],
+const initialState: Omit<TournamentState, 'advancementConfigs'> = {
   numberOfTeams: 16,
-  roundRobinRounds: [
-    { roundNumber: 1, groupCount: 4 },
-  ],
-  stageAdvancementConfigs: [],
+  roundRobinRounds: [{ roundNumber: 1, groupCount: 4 }],
   knockoutStages: {
     preQuarterFinal: false,
-    quarterFinal: true,
+    quarterFinal: false,
     semiFinal: true,
     final: true,
   },
+  stageAdvancementConfigs: [],
+  teams: [],
   stages: [],
   knockoutMatches: [],
-  advancementConfigs: {},
   currentView: 'setup',
   isGenerated: false,
   knockoutPairingMode: 'auto',
   knockoutFixtureAssignments: [],
 };
 
-export const useTournamentStore = create<TournamentState & TournamentActions>()(
+export const useTournamentStore = create<TournamentStore>()(
   persist(
     (set, get) => ({
       ...initialState,
 
       setNumberOfTeams: (count) => set({ numberOfTeams: count }),
-      
+
       setRoundRobinRounds: (rounds) => set({ roundRobinRounds: rounds }),
-      
-      updateRoundConfig: (roundNumber, groupCount) => {
-        set((state) => {
-          const rounds = [...state.roundRobinRounds];
-          const index = rounds.findIndex(r => r.roundNumber === roundNumber);
-          if (index >= 0) {
-            rounds[index] = { ...rounds[index], groupCount };
-          }
-          return { roundRobinRounds: rounds };
-        });
-      },
-      
-      setStageAdvancementConfig: (config) => {
-        set((state) => {
-          const configs = [...state.stageAdvancementConfigs];
-          const index = configs.findIndex(c => c.stageNumber === config.stageNumber);
-          if (index >= 0) {
-            configs[index] = config;
-          } else {
-            configs.push(config);
-          }
-          return { stageAdvancementConfigs: configs };
-        });
-      },
-      
+
       setKnockoutStages: (stages) => set({ knockoutStages: stages }),
-      
-      setAdvancementConfig: (stageId, config) =>
-        set((state) => ({
-          advancementConfigs: {
-            ...state.advancementConfigs,
-            [stageId]: config,
-          },
-        })),
 
-      setKnockoutPairingMode: (mode) => set({ knockoutPairingMode: mode }),
+      setStageAdvancementConfigs: (configs) => set({ stageAdvancementConfigs: configs }),
 
-      assignKnockoutFixture: (matchId, team1Id, team2Id) => {
-        set((state) => {
-          const existingIndex = state.knockoutFixtureAssignments.findIndex(
-            (a) => a.matchId === matchId
-          );
-          
-          const newAssignment: KnockoutFixtureAssignment = {
-            matchId,
-            team1Id,
-            team2Id,
-          };
+      setStageAdvancementConfig: (config) => {
+        const { stageAdvancementConfigs } = get();
+        const existingIndex = stageAdvancementConfigs.findIndex(
+          (c) => c.stageNumber === config.stageNumber
+        );
 
-          if (existingIndex >= 0) {
-            const updated = [...state.knockoutFixtureAssignments];
-            updated[existingIndex] = newAssignment;
-            return { knockoutFixtureAssignments: updated };
-          } else {
-            return {
-              knockoutFixtureAssignments: [...state.knockoutFixtureAssignments, newAssignment],
-            };
-          }
-        });
+        let updatedConfigs: StageAdvancementConfig[];
+        if (existingIndex >= 0) {
+          updatedConfigs = [...stageAdvancementConfigs];
+          updatedConfigs[existingIndex] = config;
+        } else {
+          updatedConfigs = [...stageAdvancementConfigs, config];
+        }
 
-        // Regenerate knockout matches
-        get().regenerateKnockout();
+        set({ stageAdvancementConfigs: updatedConfigs });
       },
 
       generateTournament: () => {
-        const state = get();
-        
-        // Generate teams
-        const teams: Team[] = Array.from({ length: state.numberOfTeams }, (_, i) => ({
+        const {
+          numberOfTeams,
+          roundRobinRounds,
+          knockoutStages,
+          stageAdvancementConfigs,
+          knockoutPairingMode,
+          knockoutFixtureAssignments,
+        } = get();
+
+        // Generate teams array
+        const teams: Team[] = Array.from({ length: numberOfTeams }, (_, i) => ({
           id: `team-${i + 1}`,
           name: `Team ${i + 1}`,
         }));
 
-        // Generate round-robin stages
-        const stages = generateTournamentStages(
+        const { stages, knockoutMatches } = generateTournament(
           teams,
-          state.roundRobinRounds,
-          state.stageAdvancementConfigs,
-          state.advancementConfigs
-        );
-
-        // Generate knockout matches
-        const knockoutMatches = generateKnockoutMatches(
-          stages,
-          state.knockoutStages,
-          state.stageAdvancementConfigs,
-          state.roundRobinRounds,
-          state.knockoutPairingMode,
-          state.knockoutFixtureAssignments
+          roundRobinRounds,
+          stageAdvancementConfigs,
+          knockoutStages
         );
 
         set({
           teams,
           stages,
           knockoutMatches,
-          isGenerated: true,
           currentView: 'schedule',
+          isGenerated: true,
         });
       },
 
-      regenerateStage: (stageId) => {
-        const state = get();
-        const stages = generateTournamentStages(
-          state.teams,
-          state.roundRobinRounds,
-          state.stageAdvancementConfigs,
-          state.advancementConfigs
-        );
-        set({ stages });
-      },
-
-      regenerateKnockout: () => {
-        const state = get();
-        const knockoutMatches = generateKnockoutMatches(
-          state.stages,
-          state.knockoutStages,
-          state.stageAdvancementConfigs,
-          state.roundRobinRounds,
-          state.knockoutPairingMode,
-          state.knockoutFixtureAssignments
-        );
-        set({ knockoutMatches });
-      },
-
       updateMatchDateTime: (matchId, date, time) => {
-        set((state) => {
-          // Update in round-robin stages
-          const updatedStages = state.stages.map((stage) => ({
-            ...stage,
-            matches: stage.matches.map((match) =>
-              match.id === matchId ? { ...match, date, time } : match
-            ),
-          }));
+        const { stages, knockoutMatches } = get();
 
-          // Update in knockout matches
-          const updatedKnockoutMatches = state.knockoutMatches.map((match) =>
+        const updatedStages = stages.map((stage) => ({
+          ...stage,
+          matches: stage.matches.map((match) =>
             match.id === matchId ? { ...match, date, time } : match
-          );
+          ),
+        }));
 
-          return {
-            stages: updatedStages,
-            knockoutMatches: updatedKnockoutMatches,
-          };
+        const updatedKnockoutMatches = knockoutMatches.map((match) =>
+          match.id === matchId ? { ...match, date, time } : match
+        );
+
+        set({
+          stages: updatedStages,
+          knockoutMatches: updatedKnockoutMatches,
+        });
+      },
+
+      updateTeamName: (teamId, newName) => {
+        const { stages, knockoutMatches } = get();
+
+        const updatedStages = stages.map((stage) => ({
+          ...stage,
+          groups: stage.groups.map((group) => ({
+            ...group,
+            teams: group.teams.map((team) =>
+              team.id === teamId ? { ...team, name: newName } : team
+            ),
+          })),
+          matches: stage.matches.map((match) => ({
+            ...match,
+            team1: match.team1.id === teamId ? { ...match.team1, name: newName } : match.team1,
+            team2: match.team2.id === teamId ? { ...match.team2, name: newName } : match.team2,
+          })),
+        }));
+
+        const updatedKnockoutMatches = knockoutMatches.map((match) => ({
+          ...match,
+          team1: match.team1?.id === teamId ? { ...match.team1, name: newName } : match.team1,
+          team2: match.team2?.id === teamId ? { ...match.team2, name: newName } : match.team2,
+        }));
+
+        set({
+          stages: updatedStages,
+          knockoutMatches: updatedKnockoutMatches,
         });
       },
 
       setCurrentView: (view) => set({ currentView: view }),
 
-      reset: () => set({ ...initialState }),
+      setKnockoutPairingMode: (mode) => set({ knockoutPairingMode: mode }),
+
+      assignKnockoutFixture: (assignment) => {
+        const { knockoutFixtureAssignments } = get();
+        const existingIndex = knockoutFixtureAssignments.findIndex(
+          (a) => a.matchId === assignment.matchId
+        );
+
+        let updatedAssignments: KnockoutFixtureAssignment[];
+        if (existingIndex >= 0) {
+          updatedAssignments = [...knockoutFixtureAssignments];
+          updatedAssignments[existingIndex] = assignment;
+        } else {
+          updatedAssignments = [...knockoutFixtureAssignments, assignment];
+        }
+
+        set({ knockoutFixtureAssignments: updatedAssignments });
+      },
+
+      reset: () => {
+        set(initialState);
+        localStorage.removeItem('tournament-storage');
+      },
     }),
     {
       name: 'tournament-storage',

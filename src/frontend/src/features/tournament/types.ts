@@ -46,7 +46,8 @@ export type KnockoutEntryPoint = 'PreQuarterfinals' | 'Quarterfinals' | 'Semifin
 
 export type AdvancementDestination = 
   | { type: 'NextStage'; stageIndex: number }
-  | { type: 'KnockoutEntry'; entryPoint: KnockoutEntryPoint };
+  | { type: 'KnockoutEntry'; entryPoint: KnockoutEntryPoint }
+  | { type: 'Eliminated' };
 
 // Per-stage advancement configuration
 export interface StageAdvancementConfig {
@@ -83,7 +84,7 @@ export interface TournamentState {
   stages: Stage[];
   knockoutMatches: Match[];
   advancementConfigs: Record<string, AdvancementConfig>;
-  currentView: 'setup' | 'schedule' | 'knockout';
+  currentView: 'setup' | 'schedule' | 'fullSchedule' | 'knockout';
   isGenerated: boolean;
   knockoutPairingMode: KnockoutPairingMode;
   knockoutFixtureAssignments: KnockoutFixtureAssignment[];

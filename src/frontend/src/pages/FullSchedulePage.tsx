@@ -1,0 +1,185 @@
+import { useMemo } from 'react';
+import { useTournamentStore } from '../features/tournament/useTournamentStore';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, ArrowLeft, ArrowRight } from 'lucide-react';
+import AppLayout from '../components/AppLayout';
+import { KNOCKOUT_ROUND_ORDER } from '../features/tournament/knockoutRounds';
+
+export default function FullSchedulePage() {
+  const { stages, knockoutMatches, setCurrentView } = useTournamentStore();
+
+  // Group knockout matches by round using canonical ordering
+  const knockoutMatchesByRound = useMemo(() => {
+    const grouped = new Map<string, typeof knockoutMatches>();
+    
+    knockoutMatches.forEach((match) => {
+      if (match.round) {
+        const existing = grouped.get(match.round) || [];
+        grouped.set(match.round, [...existing, match]);
+      }
+    });
+
+    // Sort by canonical round order
+    const sortedEntries = Array.from(grouped.entries()).sort((a, b) => {
+      const orderA = KNOCKOUT_ROUND_ORDER.indexOf(a[0] as any);
+      const orderB = KNOCKOUT_ROUND_ORDER.indexOf(b[0] as any);
+      return orderA - orderB;
+    });
+
+    return new Map(sortedEntries);
+  }, [knockoutMatches]);
+
+  const handleBack = () => {
+    setCurrentView('schedule');
+  };
+
+  const handleProceedToKnockout = () => {
+    setCurrentView('knockout');
+  };
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        {/* Header with Actions */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+              <CalendarDays className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Full Schedule</h1>
+              <p className="text-sm text-muted-foreground sm:text-base">
+                Complete tournament schedule
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleBack} variant="outline" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Groups
+            </Button>
+
+            <Button onClick={handleProceedToKnockout} variant="default" size="sm">
+              Proceed to Knockout
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Round-Robin Stages */}
+        {stages.map((stage) => (
+          <Card key={stage.id}>
+            <CardHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>{stage.name}</CardTitle>
+                  <CardDescription className="mt-1">
+                    {stage.groups.length} groups • {stage.matches.length} matches
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary">Round-Robin</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {stage.groups.map((group) => {
+                  const groupMatches = stage.matches.filter(
+                    (match) => match.groupId === group.id
+                  );
+
+                  return (
+                    <div key={group.id} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">Group {group.name}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {groupMatches.length} {groupMatches.length === 1 ? 'match' : 'matches'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {groupMatches.map((match) => (
+                          <div
+                            key={match.id}
+                            className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-medium">{match.team1.name}</span>
+                              <span className="text-muted-foreground">vs</span>
+                              <span className="font-medium">{match.team2.name}</span>
+                            </div>
+                            {match.date && match.time && (
+                              <div className="text-xs text-muted-foreground sm:text-sm">
+                                {match.date} at {match.time}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Knockout Stages */}
+        {knockoutMatches.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Knockout Stage</CardTitle>
+                  <CardDescription className="mt-1">
+                    {knockoutMatches.length} matches
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary">Knockout</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {Array.from(knockoutMatchesByRound.entries()).map(([round, matches]) => (
+                  <div key={round} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{round}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {matches.length} {matches.length === 1 ? 'match' : 'matches'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {matches.map((match) => (
+                        <div
+                          key={match.id}
+                          className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium">
+                              {match.team1?.name || 'TBD'}
+                            </span>
+                            <span className="text-muted-foreground">vs</span>
+                            <span className="font-medium">
+                              {match.team2?.name || 'TBD'}
+                            </span>
+                          </div>
+                          {match.date && match.time && (
+                            <div className="text-xs text-muted-foreground sm:text-sm">
+                              {match.date} at {match.time}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </AppLayout>
+  );
+}

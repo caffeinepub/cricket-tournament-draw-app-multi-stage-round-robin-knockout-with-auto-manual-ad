@@ -33,7 +33,7 @@ export function getQualifiedTeamsForKnockout(
       }
     }
     
-    // Check if runner-ups go to knockout
+    // Check if runner-ups go to knockout (exclude eliminated)
     if (stageConfig.runnerUpDestination.type === 'KnockoutEntry' &&
         stageConfig.runnerUpDestination.entryPoint === firstKnockoutEntry) {
       for (const group of stage.groups) {
@@ -76,7 +76,7 @@ export function getQualifiedTeamCount(
       count += round.groupCount;
     }
     
-    // Count runner-ups going to knockout
+    // Count runner-ups going to knockout (exclude eliminated)
     if (stageConfig.runnerUpDestination.type === 'KnockoutEntry' &&
         stageConfig.runnerUpDestination.entryPoint === firstKnockoutEntry) {
       count += round.groupCount;

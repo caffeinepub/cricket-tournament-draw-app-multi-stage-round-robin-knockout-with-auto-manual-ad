@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { SiCaffeine } from 'react-icons/si';
 import { Heart } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -13,10 +12,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <main className="mx-auto max-w-7xl">{children}</main>
         
-        <footer className="mt-16 border-t pt-8 text-center text-sm text-muted-foreground">
+        <footer className="mt-12 border-t pt-6 text-center text-sm text-muted-foreground sm:mt-16 sm:pt-8">
           <p className="flex items-center justify-center gap-2">
             Built with <Heart className="h-4 w-4 fill-rose-500 text-rose-500" /> using{' '}
             <a

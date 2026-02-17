@@ -1,54 +1,52 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T13:01:08.348Z",
-  "summary": "Diff implements per-stage (winner/runner-up) advancement routing across multi-stage round robin, shared knockout qualification/counting logic, strict validation against the first enabled knockout round size (no byes), and knockout bracket generation that only seeds the first enabled round while later rounds are placeholders. It also adds UI for configuring advancement and previewing stage flow, plus a manual pairing editor for the first knockout round.",
+  "generatedAt": "2026-02-17T18:03:19.813Z",
+  "summary": "Diff implements sequential group lettering across round-robin stages, updates NextStage destination labels to show the correct robin round number, and appears to add UI to preview stage flow. A specific 12-group→4-group→Pre-Quarterfinals preset is claimed in summaries but is not directly evidenced in the truncated TournamentSetupPage diff. Several unrelated UI/navigation features (e.g., full schedule view) appear added beyond the request.",
   "missing_requirements": [
     {
-      "id": "REQ-4",
-      "requirement": "Allow manual assignment/adjustment of teams for knockout matches ideally for all rounds that exist (beyond the first enabled round).",
-      "reason": "The diff evidence shows manual assignment UI and logic focused on the first enabled knockout round; subsequent rounds are generated as placeholders, but there is no clear evidence of UI to manually assign participants for those later-round placeholder matches.",
+      "id": "REQ-1",
+      "requirement": "Add a tournament setup preset that configures 2 robin rounds (12 groups then 4 groups), enables Pre-Quarterfinals, and sets advancement rules: Round 1 winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2); Round 2 winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated; and show qualified team count = 16 passing validation.",
+      "reason": "The diff summary text asserts a preset exists, but the provided TournamentSetupPage.tsx content is truncated before any preset button/config application logic is shown, so the exact preset values and the qualified-count/compatibility behavior cannot be verified from the included code excerpt.",
       "evidence": [
-        "frontend/src/components/KnockoutPairingEditor.tsx (filters to firstRoundMatches and describes \"first knockout round\")",
-        "frontend/src/features/tournament/knockoutGenerator.ts (generates placeholders for later rounds via generatePlaceholderRound)"
+        "frontend/src/pages/TournamentSetupPage.tsx (truncated)",
+        "frontend-file-summaries.txt (claims preset exists but not code-level evidence)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Backend migration scaffolding and new backend storage/maps for groups/stages/roundRobinStages.",
-      "reason": "BuildRequest constraints said backend changes only if needed; the request is primarily about frontend advancement/validation/bracket behavior. The diff introduces a new migration module and backend data structures/endpoints without clear linkage from the diff summary to the required frontend fixes.",
+      "description": "Introduce a new 'fullSchedule' view/page and navigation changes across app pages (setup → schedule → full schedule → knockout).",
+      "reason": "BuildRequest does not ask for a new full schedule view or routing changes; it focuses on a preset, sequential group lettering, and correct advancement destination labels.",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
+        "frontend-file-summaries.txt (mentions 'fullSchedule' view, StageSchedulePage 'View Full Schedule', KnockoutPage back to full schedule)",
+        "frontend/src/features/tournament/useTournamentStore.ts (truncated; includes setCurrentView type with 'fullSchedule')"
       ]
     },
     {
-      "description": "Knockout pairing mode toggle between auto and manual.",
-      "reason": "REQ-4 requires a manually adjustable bracket and explicitly disallows auto-advancing teams by simulating winners; it does not request an 'auto pairing mode' feature. The diff adds an explicit auto/manual pairing mode UI and store state.",
+      "description": "Add/modify shared layout footer with 'caffeine.ai attribution'.",
+      "reason": "No requirement mentions adding attribution or changing the app layout/footer.",
       "evidence": [
-        "frontend/src/components/KnockoutPairingEditor.tsx",
-        "frontend/src/features/tournament/types.ts (KnockoutPairingMode)",
-        "frontend/src/features/tournament/useTournamentStore.ts (knockoutPairingMode)"
+        "frontend-file-summaries.txt (frontend/src/components/AppLayout.tsx summary mentions caffeine.ai attribution)"
+      ]
+    },
+    {
+      "description": "Add match date/time editing component behavior (inline validation and persistence).",
+      "reason": "Non-goals explicitly say not to implement real match result entry/standings; while date/time editing isn’t results, it is also not requested by any REQ and appears as additional scope.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/components/MatchDateTimeEditor.tsx summary)",
+        "frontend/src/features/tournament/useTournamentStore.ts (shows updateMatchDateTime implementation)"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.62,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AdvancementConfigDialog.tsx",
-    "frontend/src/components/KnockoutPairingEditor.tsx",
     "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
     "frontend/src/features/tournament/generation.ts",
-    "frontend/src/features/tournament/knockoutGenerator.ts",
-    "frontend/src/features/tournament/matchCount.ts",
-    "frontend/src/features/tournament/qualification.ts",
-    "frontend/src/features/tournament/types.ts",
+    "frontend/src/features/tournament/groupNaming.ts",
     "frontend/src/features/tournament/useTournamentStore.ts",
     "frontend/src/features/tournament/validation.ts",
-    "frontend/src/pages/KnockoutPage.tsx",
     "frontend/src/pages/TournamentSetupPage.tsx",
     "project_state.json"
   ]

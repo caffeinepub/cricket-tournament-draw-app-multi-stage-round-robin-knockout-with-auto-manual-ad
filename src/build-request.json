@@ -1,111 +1,70 @@
 {
   "kind": "build_request",
-  "title": "Fix multi-stage round-robin advancement logic and enforce valid knockout qualification",
-  "projectName": "Tournament Bracket Manager",
-  "priority": "high",
+  "title": "Implement 12-group Round 1 to Round 2 to Pre-Quarter advancement rule and stage-specific group lettering",
+  "projectName": "Tournament Scheduler",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement per-round-robin-stage advancement rules so that each round-robin stage can independently define where the winner and runner-up advance (either into a specific knockout entry point such as Pre-Quarterfinal/Quarterfinal/Semifinal, or into the next round-robin stage).",
-      "target": "both",
+      "text": "Add a tournament setup preset for the requested group/advancement structure: Round-robin 1 has 12 groups (A–L) where group winners (A1–L1) advance to Knockout → Pre-Quarterfinals, and group runners-up (A2–L2) advance to Round-robin 2; Round-robin 2 has 4 groups (M–P) where group winners (M1–P1) advance to Knockout → Pre-Quarterfinals, and Round-robin 2 runners-up are eliminated.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "3-Number of Group in Round Robin  ( Manual entry ) for all robin round as entered\n4- rules -A - winner and runner up will go to pre quarter final or Quarter Final or Semi ginal  B- Winner will go to pre quarter final or quarter final, runner up will go to robin round 2 and yhe winner of robin round will go to pre quarter final or quarter final"
+          "We have 12 group A to L in robin round 1... winner will go to prequarter means A1 to L1... A2 to L2 into robin round 2... Now the winner would be M1,N1,O1,P1 they will go to prequarter"
         ]
       },
       "acceptanceCriteria": [
-        "In the setup UI, each round-robin stage has its own advancement configuration (at minimum: Winner destination and Runner-up destination).",
-        "It is possible to configure: winners from Round Robin 1 advance to a knockout stage while runner-ups advance to Round Robin 2.",
-        "If a destination is set to “next round-robin”, only those teams are used as the input team pool for generating the next round-robin stage.",
-        "If a destination is set to “knockout”, those teams are included in the knockout-qualified pool without being included in subsequent round-robin stages."
+        "In Tournament Setup, the user can apply a preset that configures: (1) number of robin rounds = 2, (2) Round 1 group count = 12, (3) Round 2 group count = 4, (4) knockout stages enabled includes Pre-Quarterfinals, (5) stage advancement config for Round 1: winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2), (6) stage advancement config for Round 2: winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated.",
+        "After applying the preset and generating, the qualified team count shown in setup equals 16 (12 Round 1 winners + 4 Round 2 winners) and passes existing compatibility validation for Pre-Quarterfinals."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Correct qualification and counting logic to match the user’s examples, including multi-stage routing (e.g., winners from Round Robin 1 directly to knockout + winners from Round Robin 2 to knockout, with Round Robin 2 being composed of Round Robin 1 runner-ups).",
+      "text": "Update round-robin group naming so that group letters continue across round-robin stages (instead of restarting at A each stage), producing Round 1 group names A–L for 12 groups and Round 2 group names M–P for 4 groups in this configuration.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Number of team 48\nNumber of round robin 2\nGroup in robin round 1 - 12\nGroup in robin round 2 - 4\n\nNow i selected winner of round robin will go to pre quarter final and runner up will go to round robin 2\nSo we will get 12 prequarter final team and 4 team from robin round 2\nSo we will get 16 team"
+          "We have 12 group A to L in robin round 1... Now the winner would be M1,N1,O1,P1"
         ]
       },
       "acceptanceCriteria": [
-        "For 48 teams, 2 round-robin rounds, Round 1 groups=12, Round 2 groups=4, with Round 1 winners routed to Pre-Quarterfinal and Round 1 runner-ups routed to Round 2, and Round 2 winners routed to Pre-Quarterfinal: the app reports exactly 16 knockout-qualified teams (12 + 4).",
-        "For 16 teams, 1 round-robin round, 4 groups, with winners+runner-ups routed to Quarterfinal: the app reports exactly 8 knockout-qualified teams.",
-        "The displayed “Qualified for Knockout” count on both setup summary and knockout page is computed by the same shared logic (no duplicated or conflicting formulas)."
+        "When generating multiple round-robin stages, group names are unique and sequential across stages (e.g., if Stage 1 has 12 groups named A–L, then Stage 2 group names start at M).",
+        "Stage group names shown in the schedule views and group tables match the sequential naming (A–L then M–P for the preset configuration)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Enforce “only valid” progression combinations by validating that the number of knockout-qualified teams exactly matches the first enabled knockout round size (16 for Pre-Quarterfinal, 8 for Quarterfinal, 4 for Semifinal, 2 for Final), and block tournament generation when invalid (no auto-byes).",
+      "text": "Fix user-facing advancement destination labels so that a NextStage destination displays the actual robin round number it points to (e.g., “Robin Round 2”), and does not display an incorrect “Round X” value derived by adding 1 to the stage number.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-6"
         ],
         "quotes": [
-          "2-enforce only valid"
+          "A2 to L2 into robin round 2"
         ]
       },
       "acceptanceCriteria": [
-        "If the configured advancement routing produces a knockout-qualified team count that does not equal the required count for the first enabled knockout stage, the UI shows an error explaining the mismatch and prevents generation.",
-        "No automatic byes are created or implied to reconcile mismatched counts.",
-        "Validation accounts for multi-stage routing (teams routed to knockout from earlier round-robin stages are included)."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Update knockout bracket generation so it does not simulate winners to populate later knockout rounds; instead, generate a manually adjustable bracket where match participants can be manually assigned/changed, consistent with the requirement that the knockout bracket is manually adjustable.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "3-manually adjust"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When generating knockout matches, only the first enabled knockout round is pre-populated from the knockout-qualified team pool; subsequent rounds are generated as bracket placeholders and are not auto-filled using a fake “winner = team1” assumption.",
-        "The UI allows manual assignment/adjustment of teams for knockout matches (at least for the first enabled round; ideally for all rounds that exist).",
-        "No match display crashes when a later-round participant is not yet known (e.g., UI renders a placeholder such as “TBD”)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Implement the missing UI components for configuring per-stage advancement and (if needed) stage-to-stage group assignment so the user can fully define: number of teams, number of round-robin stages, groups per stage, and per-stage advancement routing for winner/runner-up.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "1- Number of team ( manual entry )\n2-Number of Round Robin ( manual entry )\n3-Number of Group in Round Robin  ( Manual entry ) for all robin round as entered"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The tournament setup page supports manual entry of: number of teams, number of round-robin stages, and number of groups for each round-robin stage (existing behavior retained).",
-        "The previously empty placeholder components (frontend/src/components/AdvancementConfigDialog.tsx and frontend/src/components/Stage2GroupAssignmentPanel.tsx) are replaced with working UI (or removed from usage if not needed) so there are no dead/blank screens for advancement configuration.",
-        "All user-facing text in the setup and advancement configuration UI is in English."
+        "Wherever advancement destinations are displayed (e.g., the setup page’s advancement summary and the stage flow preview), a winner/runner-up destination of {type:'NextStage', stageIndex: 2} is displayed as 'Robin Round 2' (or equivalent clearly correct text).",
+        "Knockout entry destinations continue to display as Pre-Quarterfinals/Quarterfinals/Semifinals as they do now."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor (all logic in backend/main.mo); add backend changes only if needed to support the corrected advancement model.",
-    "Do not implement auto-byes; invalid configurations must be rejected.",
-    "Knockout brackets must be manually adjustable; do not auto-advance teams by simulating winners.",
-    "Do not edit any files under frontend/src/components/ui or any immutable paths listed in SYSTEM_CONTEXT."
+    "Use English for all user-facing text.",
+    "Do not edit files under frontend/src/components/ui or any paths listed in frontend.immutablePaths.",
+    "Keep backend as a single Motoko actor (no new backend services)."
   ],
   "nonGoals": [
-    "Implementing real match results / standings computation to determine actual group winners and runner-ups (current generation may remain based on ordered teams unless explicitly required later).",
-    "Adding third-party authentication providers beyond Internet Identity.",
-    "Adding real-time updates (WebSockets) or external databases."
+    "Do not implement real match result entry or standings calculation; current winner/runner-up selection remains based on existing team ordering logic.",
+    "Do not add third-party authentication providers beyond Internet Identity.",
+    "Do not change the knockout bracket sizing rules beyond what is required to support the specified pre-quarter qualification flow."
   ],
   "imageRequirements": {
     "required": [],

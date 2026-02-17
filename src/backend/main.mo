@@ -1,8 +1,8 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   type AdvancementType = {
     #NextStage : Nat;
