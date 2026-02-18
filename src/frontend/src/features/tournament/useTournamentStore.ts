@@ -9,10 +9,18 @@ import {
   KnockoutPairingMode,
   KnockoutFixtureAssignment,
   Team,
+  KnockoutWarnings,
+  KnockoutWinnerMap,
+  Match,
 } from './types';
 import { generateTournament } from './generation';
 import { generateKnockoutMatches } from './knockoutGenerator';
 import { reorderGroupTeams } from './groupReorder';
+import { reseedKnockoutTeams } from './knockoutReseeding';
+import { getQualifiedTeamsForKnockout } from './qualification';
+import { applyKnockoutWinners, clearDownstreamWinners } from './knockoutWinners';
+import { normalizePlaceholder } from './knockoutPlaceholders';
+import { getFixtureCodeForMatch } from './knockoutFixtureCode';
 
 interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   setNumberOfTeams: (count: number) => void;
@@ -28,6 +36,8 @@ interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   setCurrentView: (view: 'setup' | 'schedule' | 'fullSchedule' | 'knockout') => void;
   setKnockoutPairingMode: (mode: KnockoutPairingMode) => void;
   assignKnockoutFixture: (assignment: KnockoutFixtureAssignment) => void;
+  validateManualPairing: (assignment: KnockoutFixtureAssignment) => string[];
+  setKnockoutWinner: (matchId: string, winnerId: string) => void;
   reset: () => void;
 }
 
@@ -48,7 +58,57 @@ const initialState: Omit<TournamentState, 'advancementConfigs'> = {
   isGenerated: false,
   knockoutPairingMode: 'auto',
   knockoutFixtureAssignments: [],
+  knockoutWarnings: {
+    reseedingWarnings: [],
+    manualPairingWarnings: [],
+  },
+  knockoutWinners: {},
 };
+
+/**
+ * Migrate legacy matches to add stable source references
+ */
+function migrateMatchSources(matches: Match[]): Match[] {
+  return matches.map(match => {
+    // Skip if already has source references
+    if (match.team1Source || match.team2Source) {
+      return match;
+    }
+
+    // Build fixture code map
+    const fixtureToMatchId = new Map<string, string>();
+    matches.forEach(m => {
+      const code = getFixtureCodeForMatch(m, matches);
+      if (code) {
+        fixtureToMatchId.set(code, m.id);
+      }
+    });
+
+    let team1Source: string | undefined;
+    let team2Source: string | undefined;
+
+    // Try to infer source from placeholder names
+    if (match.team1?.name) {
+      const normalized = normalizePlaceholder(match.team1.name);
+      if (fixtureToMatchId.has(normalized)) {
+        team1Source = normalized;
+      }
+    }
+
+    if (match.team2?.name) {
+      const normalized = normalizePlaceholder(match.team2.name);
+      if (fixtureToMatchId.has(normalized)) {
+        team2Source = normalized;
+      }
+    }
+
+    return {
+      ...match,
+      team1Source,
+      team2Source,
+    };
+  });
+}
 
 export const useTournamentStore = create<TournamentStore>()(
   persist(
@@ -103,7 +163,7 @@ export const useTournamentStore = create<TournamentStore>()(
           {} // Empty advancementConfigs object (legacy parameter)
         );
 
-        const knockoutMatches = generateKnockoutMatches(
+        const { matches: knockoutMatches, warnings } = generateKnockoutMatches(
           stages,
           knockoutStages,
           stageAdvancementConfigs,
@@ -112,10 +172,15 @@ export const useTournamentStore = create<TournamentStore>()(
           knockoutFixtureAssignments
         );
 
+        // Apply any existing winners
+        const { knockoutWinners } = get();
+        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, knockoutWinners);
+
         set({
           teams,
           stages,
-          knockoutMatches,
+          knockoutMatches: matchesWithWinners,
+          knockoutWarnings: warnings,
           currentView: 'schedule',
           isGenerated: true,
         });
@@ -172,7 +237,7 @@ export const useTournamentStore = create<TournamentStore>()(
       },
 
       updateTeamPosition: (stageId, groupId, teamId, position) => {
-        const { stages, knockoutStages, stageAdvancementConfigs, roundRobinRounds, knockoutPairingMode, knockoutFixtureAssignments } = get();
+        const { stages, knockoutStages, stageAdvancementConfigs, roundRobinRounds, knockoutPairingMode, knockoutFixtureAssignments, knockoutWinners } = get();
 
         // Update the group's team order
         const updatedStages = stages.map((stage) => {
@@ -193,7 +258,7 @@ export const useTournamentStore = create<TournamentStore>()(
         });
 
         // Regenerate knockout matches to reflect new group ordering (winners/runner-ups)
-        const regeneratedKnockoutMatches = generateKnockoutMatches(
+        const { matches: regeneratedKnockoutMatches, warnings } = generateKnockoutMatches(
           updatedStages,
           knockoutStages,
           stageAdvancementConfigs,
@@ -202,9 +267,13 @@ export const useTournamentStore = create<TournamentStore>()(
           knockoutFixtureAssignments
         );
 
+        // Apply winners
+        const matchesWithWinners = applyKnockoutWinners(regeneratedKnockoutMatches, knockoutWinners);
+
         set({
           stages: updatedStages,
-          knockoutMatches: regeneratedKnockoutMatches,
+          knockoutMatches: matchesWithWinners,
+          knockoutWarnings: warnings,
         });
       },
 
@@ -252,10 +321,32 @@ export const useTournamentStore = create<TournamentStore>()(
 
       setCurrentView: (view) => set({ currentView: view }),
 
-      setKnockoutPairingMode: (mode) => set({ knockoutPairingMode: mode }),
+      setKnockoutPairingMode: (mode) => {
+        const { stages, knockoutStages, stageAdvancementConfigs, roundRobinRounds, knockoutFixtureAssignments, knockoutWinners } = get();
+        
+        // Regenerate knockout matches with new mode
+        const { matches: knockoutMatches, warnings } = generateKnockoutMatches(
+          stages,
+          knockoutStages,
+          stageAdvancementConfigs,
+          roundRobinRounds,
+          mode,
+          knockoutFixtureAssignments
+        );
+
+        // Apply winners
+        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, knockoutWinners);
+        
+        set({ 
+          knockoutPairingMode: mode,
+          knockoutMatches: matchesWithWinners,
+          knockoutWarnings: warnings,
+        });
+      },
 
       assignKnockoutFixture: (assignment) => {
-        const { knockoutFixtureAssignments } = get();
+        const { knockoutFixtureAssignments, stages, knockoutStages, stageAdvancementConfigs, roundRobinRounds, knockoutPairingMode, knockoutWinners } = get();
+        
         const existingIndex = knockoutFixtureAssignments.findIndex(
           (a) => a.matchId === assignment.matchId
         );
@@ -268,16 +359,92 @@ export const useTournamentStore = create<TournamentStore>()(
           updatedAssignments = [...knockoutFixtureAssignments, assignment];
         }
 
-        set({ knockoutFixtureAssignments: updatedAssignments });
+        // Regenerate knockout matches with new assignments
+        const { matches: knockoutMatches, warnings } = generateKnockoutMatches(
+          stages,
+          knockoutStages,
+          stageAdvancementConfigs,
+          roundRobinRounds,
+          knockoutPairingMode,
+          updatedAssignments
+        );
+
+        // Apply winners
+        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, knockoutWinners);
+
+        set({
+          knockoutFixtureAssignments: updatedAssignments,
+          knockoutMatches: matchesWithWinners,
+          knockoutWarnings: warnings,
+        });
       },
 
-      reset: () => {
-        set(initialState);
-        localStorage.removeItem('tournament-storage');
+      validateManualPairing: (assignment) => {
+        const { stages } = get();
+        const warnings: string[] = [];
+
+        if (!assignment.team1Id || !assignment.team2Id) {
+          return warnings;
+        }
+
+        // Find teams in round-robin stages
+        let team1Group: string | null = null;
+        let team2Group: string | null = null;
+
+        for (const stage of stages) {
+          for (const group of stage.groups) {
+            const hasTeam1 = group.teams.some(t => t.id === assignment.team1Id);
+            const hasTeam2 = group.teams.some(t => t.id === assignment.team2Id);
+            
+            if (hasTeam1) team1Group = group.name;
+            if (hasTeam2) team2Group = group.name;
+          }
+        }
+
+        // Check if teams are from the same group
+        if (team1Group && team2Group && team1Group === team2Group) {
+          warnings.push(`Teams from the same group (${team1Group}) should not meet before the final.`);
+        }
+
+        return warnings;
       },
+
+      setKnockoutWinner: (matchId, winnerId) => {
+        const { knockoutMatches, knockoutWinners } = get();
+
+        // Clear downstream winners first (transitive clearing)
+        const clearedWinnerMap = clearDownstreamWinners(knockoutMatches, matchId, knockoutWinners);
+
+        // Set the new winner
+        const updatedWinnerMap = {
+          ...clearedWinnerMap,
+          [matchId]: winnerId,
+        };
+
+        // Re-apply all winners to propagate the change
+        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, updatedWinnerMap);
+
+        set({
+          knockoutWinners: updatedWinnerMap,
+          knockoutMatches: matchesWithWinners,
+        });
+      },
+
+      reset: () => set(initialState),
     }),
     {
       name: 'tournament-storage',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        // Migration from version 0 or 1 to version 2
+        if (version < 2) {
+          // Migrate knockout matches to add source references
+          if (persistedState.knockoutMatches) {
+            persistedState.knockoutMatches = migrateMatchSources(persistedState.knockoutMatches);
+          }
+        }
+        return persistedState;
+      },
     }
   )
 );

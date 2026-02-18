@@ -1,150 +1,153 @@
-import { Match, Team, Stage, KnockoutStage, StageAdvancementConfig, RoundRobinRoundConfig, KnockoutPairingMode, KnockoutFixtureAssignment } from './types';
+import { Stage, Match, Team, KnockoutStage, StageAdvancementConfig, RoundRobinRoundConfig, KnockoutPairingMode, KnockoutFixtureAssignment, KnockoutWarnings } from './types';
 import { getQualifiedTeamsForKnockout } from './qualification';
+import { reseedKnockoutTeams } from './knockoutReseeding';
 import { KNOCKOUT_ROUNDS } from './knockoutRounds';
 
+interface KnockoutGenerationResult {
+  matches: Match[];
+  warnings: KnockoutWarnings;
+}
+
 /**
- * Generate knockout bracket matches based on qualified teams from round-robin stages
+ * Generate knockout matches based on qualified teams and knockout configuration
  */
 export function generateKnockoutMatches(
   stages: Stage[],
   knockoutStages: KnockoutStage,
   stageAdvancementConfigs: StageAdvancementConfig[],
   roundRobinRounds: RoundRobinRoundConfig[],
-  pairingMode: KnockoutPairingMode = 'auto',
-  fixtureAssignments: KnockoutFixtureAssignment[] = []
-): Match[] {
-  const matches: Match[] = [];
-  
-  // Get qualified teams for the first enabled knockout stage
-  const qualifiedTeams = getQualifiedTeamsForKnockout(
-    stages,
-    stageAdvancementConfigs,
-    knockoutStages,
-    roundRobinRounds
-  );
-  
-  // Filter out any TBD placeholder teams
-  const realTeams = qualifiedTeams.filter(team => !team.id.startsWith('tbd-'));
-  
-  let currentRoundTeams = realTeams;
-  let matchIdCounter = 1;
-  
-  // Pre-Quarterfinals (16 teams → 8 matches)
-  if (knockoutStages.preQuarterFinal) {
-    const preQuarterMatches = generateRoundMatches(
-      currentRoundTeams,
-      KNOCKOUT_ROUNDS.PRE_QUARTERFINAL,
-      matchIdCounter,
-      pairingMode,
-      fixtureAssignments
-    );
-    matches.push(...preQuarterMatches);
-    matchIdCounter += preQuarterMatches.length;
-    // Next round gets winner placeholders (one per match)
-    currentRoundTeams = createWinnerPlaceholders(preQuarterMatches.length);
-  }
-  
-  // Quarterfinals (8 teams → 4 matches)
-  if (knockoutStages.quarterFinal) {
-    const quarterMatches = generateRoundMatches(
-      currentRoundTeams,
-      KNOCKOUT_ROUNDS.QUARTERFINAL,
-      matchIdCounter,
-      currentRoundTeams.some(t => t.id.startsWith('tbd-')) ? 'auto' : pairingMode,
-      currentRoundTeams.some(t => t.id.startsWith('tbd-')) ? [] : fixtureAssignments
-    );
-    matches.push(...quarterMatches);
-    matchIdCounter += quarterMatches.length;
-    // Next round gets winner placeholders (one per match)
-    currentRoundTeams = createWinnerPlaceholders(quarterMatches.length);
-  }
-  
-  // Semifinals (4 teams → 2 matches)
-  if (knockoutStages.semiFinal) {
-    const semiMatches = generateRoundMatches(
-      currentRoundTeams,
-      KNOCKOUT_ROUNDS.SEMIFINAL,
-      matchIdCounter,
-      'auto',
-      []
-    );
-    matches.push(...semiMatches);
-    matchIdCounter += semiMatches.length;
-    // Next round gets winner placeholders (one per match)
-    currentRoundTeams = createWinnerPlaceholders(semiMatches.length);
-  }
-  
-  // Final (2 teams → 1 match)
-  if (knockoutStages.final) {
-    const finalMatches = generateRoundMatches(
-      currentRoundTeams,
-      KNOCKOUT_ROUNDS.FINAL,
-      matchIdCounter,
-      'auto',
-      []
-    );
-    matches.push(...finalMatches);
-  }
-  
-  return matches;
-}
-
-function generateRoundMatches(
-  teams: Team[],
-  round: string,
-  startId: number,
   pairingMode: KnockoutPairingMode,
   fixtureAssignments: KnockoutFixtureAssignment[]
-): Match[] {
+): KnockoutGenerationResult {
+  const warnings: KnockoutWarnings = {
+    reseedingWarnings: [],
+    manualPairingWarnings: [],
+  };
+
+  // Get qualified teams
+  const qualifiedTeams = getQualifiedTeamsForKnockout(stages, stageAdvancementConfigs, knockoutStages, roundRobinRounds);
+
+  // Determine starting round
+  let startingRound: string;
+  let teamCount: number;
+
+  if (knockoutStages.preQuarterFinal) {
+    startingRound = KNOCKOUT_ROUNDS.PRE_QUARTERFINAL;
+    teamCount = 16;
+  } else if (knockoutStages.quarterFinal) {
+    startingRound = KNOCKOUT_ROUNDS.QUARTERFINAL;
+    teamCount = 8;
+  } else if (knockoutStages.semiFinal) {
+    startingRound = KNOCKOUT_ROUNDS.SEMIFINAL;
+    teamCount = 4;
+  } else if (knockoutStages.final) {
+    startingRound = KNOCKOUT_ROUNDS.FINAL;
+    teamCount = 2;
+  } else {
+    return { matches: [], warnings };
+  }
+
+  // Validate team count
+  if (qualifiedTeams.length !== teamCount) {
+    return { matches: [], warnings };
+  }
+
+  let orderedTeams: Team[];
+
+  if (pairingMode === 'auto') {
+    // Use reseeding algorithm
+    const reseedResult = reseedKnockoutTeams(qualifiedTeams, stages);
+    orderedTeams = reseedResult.teams;
+    warnings.reseedingWarnings = reseedResult.warnings;
+  } else {
+    // Manual mode: use fixture assignments
+    orderedTeams = qualifiedTeams;
+  }
+
+  // Generate matches for all rounds
   const matches: Match[] = [];
-  const matchCount = teams.length / 2;
-  
-  for (let i = 0; i < matchCount; i++) {
-    const matchId = `knockout-${round.toLowerCase()}-${startId + i}`;
-    
+  const roundsToGenerate: string[] = [];
+
+  if (knockoutStages.preQuarterFinal) roundsToGenerate.push(KNOCKOUT_ROUNDS.PRE_QUARTERFINAL);
+  if (knockoutStages.quarterFinal) roundsToGenerate.push(KNOCKOUT_ROUNDS.QUARTERFINAL);
+  if (knockoutStages.semiFinal) roundsToGenerate.push(KNOCKOUT_ROUNDS.SEMIFINAL);
+  if (knockoutStages.final) roundsToGenerate.push(KNOCKOUT_ROUNDS.FINAL);
+
+  // Generate first round with actual teams
+  const firstRoundMatchCount = teamCount / 2;
+  for (let i = 0; i < firstRoundMatchCount; i++) {
     let team1: Team;
     let team2: Team;
-    
-    if (pairingMode === 'manual' && !teams.some(t => t.id.startsWith('tbd-'))) {
-      // Manual mode: use fixture assignments if available
+
+    if (pairingMode === 'manual') {
+      // Find assignment for this match
+      const matchId = `knockout-${startingRound.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`;
       const assignment = fixtureAssignments.find(a => a.matchId === matchId);
       
-      if (assignment && assignment.team1Id && assignment.team2Id) {
-        team1 = teams.find(t => t.id === assignment.team1Id) || teams[i * 2] || createTBDTeam(i * 2);
-        team2 = teams.find(t => t.id === assignment.team2Id) || teams[i * 2 + 1] || createTBDTeam(i * 2 + 1);
+      if (assignment?.team1Id && assignment?.team2Id) {
+        team1 = orderedTeams.find(t => t.id === assignment.team1Id) || orderedTeams[i * 2];
+        team2 = orderedTeams.find(t => t.id === assignment.team2Id) || orderedTeams[i * 2 + 1];
       } else {
-        // No assignment yet, use TBD
-        team1 = createTBDTeam(i * 2);
-        team2 = createTBDTeam(i * 2 + 1);
+        team1 = orderedTeams[i * 2];
+        team2 = orderedTeams[i * 2 + 1];
       }
     } else {
-      // Auto mode: sequential pairing
-      team1 = teams[i * 2] || createTBDTeam(i * 2);
-      team2 = teams[i * 2 + 1] || createTBDTeam(i * 2 + 1);
+      team1 = orderedTeams[i * 2];
+      team2 = orderedTeams[i * 2 + 1];
     }
-    
+
     matches.push({
-      id: matchId,
+      id: `knockout-${startingRound.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
       team1,
       team2,
-      round,
+      round: startingRound,
     });
   }
-  
-  return matches;
+
+  // Generate subsequent rounds with placeholders and source references
+  let currentRoundIndex = roundsToGenerate.indexOf(startingRound);
+  let previousRoundMatchCount = firstRoundMatchCount;
+
+  for (let r = currentRoundIndex + 1; r < roundsToGenerate.length; r++) {
+    const round = roundsToGenerate[r];
+    const matchCount = previousRoundMatchCount / 2;
+    const previousRound = roundsToGenerate[r - 1];
+
+    for (let i = 0; i < matchCount; i++) {
+      const prevMatch1Index = i * 2;
+      const prevMatch2Index = i * 2 + 1;
+
+      // Get fixture codes from previous round
+      const team1SourceCode = getFixtureCodeForRound(previousRound, prevMatch1Index);
+      const team2SourceCode = getFixtureCodeForRound(previousRound, prevMatch2Index);
+
+      matches.push({
+        id: `knockout-${round.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
+        team1: { id: `placeholder-${team1SourceCode}`, name: team1SourceCode },
+        team2: { id: `placeholder-${team2SourceCode}`, name: team2SourceCode },
+        round,
+        team1Source: team1SourceCode,
+        team2Source: team2SourceCode,
+      });
+    }
+
+    previousRoundMatchCount = matchCount;
+  }
+
+  return { matches, warnings };
 }
 
 /**
- * Create winner placeholder teams for the next round.
- * Each match produces one winner, so we need 'matchCount' teams for the next round.
+ * Get fixture code for a specific round and match index
  */
-function createWinnerPlaceholders(matchCount: number): Team[] {
-  return Array.from({ length: matchCount }, (_, i) => createTBDTeam(i));
-}
-
-function createTBDTeam(index: number): Team {
-  return {
-    id: `tbd-${index}`,
-    name: 'TBD',
+function getFixtureCodeForRound(round: string, matchIndex: number): string {
+  const codes: Record<string, string> = {
+    [KNOCKOUT_ROUNDS.PRE_QUARTERFINAL]: 'PQ',
+    [KNOCKOUT_ROUNDS.QUARTERFINAL]: 'Q',
+    [KNOCKOUT_ROUNDS.SEMIFINAL]: 'S',
+    [KNOCKOUT_ROUNDS.FINAL]: 'F',
   };
+
+  const prefix = codes[round] || 'M';
+  return `${prefix}${matchIndex + 1}`;
 }

@@ -21,33 +21,38 @@ actor {
     advancementRuleRunnerUp : AdvancementType;
   };
 
+  type StageType = {
+    #RoundRobin : RoundRobinStageConfig;
+    #Knockout;
+  };
+
+  type Stage = {
+    id : Nat;
+    name : Text;
+    stageType : StageType;
+  };
+
   let groups = Map.empty<Nat, Text>();
-  let stages = Map.empty<Nat, Text>();
-  let roundRobinStages = Map.empty<Nat, RoundRobinStageConfig>();
+  let stages = Map.empty<Nat, Stage>();
 
   public shared ({ caller }) func addGroup(id : Nat, name : Text) : async () {
     groups.add(id, name);
   };
 
-  public shared ({ caller }) func addStage(id : Nat, name : Text) : async () {
-    stages.add(id, name);
+  public shared ({ caller }) func addStage(id : Nat, name : Text, stageType : StageType) : async () {
+    let stage : Stage = {
+      id;
+      name;
+      stageType;
+    };
+    stages.add(id, stage);
   };
 
-  public shared ({ caller }) func createRoundRobinStageConfig(
-    stageId : Nat,
-    advancementRuleWinner : AdvancementType,
-    advancementRuleRunnerUp : AdvancementType,
-  ) : async () {
-    if (not stages.containsKey(stageId)) {
-      return;
-    };
+  public shared ({ caller }) func getStage(id : Nat) : async ?Stage {
+    stages.get(id);
+  };
 
-    let config : RoundRobinStageConfig = {
-      id = stageId;
-      advancementRuleWinner;
-      advancementRuleRunnerUp;
-    };
-
-    roundRobinStages.add(stageId, config);
+  public shared ({ caller }) func getAllStages() : async [(Nat, Stage)] {
+    stages.toArray();
   };
 };

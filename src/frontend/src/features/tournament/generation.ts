@@ -3,7 +3,9 @@ import { generateRoundRobinMatches } from './roundRobinScheduler';
 import { generateGroupName } from './groupNaming';
 
 /**
- * Generate tournament stages based on multi-round configuration and per-stage advancement configs
+ * Generate tournament stages based on multi-round configuration and per-stage advancement configs.
+ * For multi-stage robin rounds, ensures deterministic seeding: Robin Round 2 is populated exclusively
+ * from Robin Round 1 runner-ups in stable group-index order.
  */
 export function generateTournament(
   teams: Team[],
@@ -16,7 +18,7 @@ export function generateTournament(
   // Track teams available for each stage
   let currentTeams = [...teams];
   
-  // Track cumulative group count for sequential naming
+  // Track cumulative group count for sequential naming across all rounds
   let groupNameOffset = 0;
   
   for (let i = 0; i < roundRobinRounds.length; i++) {
@@ -41,7 +43,7 @@ export function generateTournament(
       });
     }
     
-    // Update offset for next round
+    // Update offset for next round - continues sequentially (A-Z, AA-AZ, etc.)
     groupNameOffset += roundConfig.groupCount;
     
     // Generate matches for all groups
@@ -67,6 +69,7 @@ export function generateTournament(
       if (stageConfig) {
         const nextStageNumber = roundRobinRounds[i + 1].roundNumber;
         
+        // Collect teams in deterministic order: iterate groups in creation order
         for (const group of groups) {
           // Add winners if they advance to next stage
           if (stageConfig.winnerDestination.type === 'NextStage' &&
@@ -75,7 +78,10 @@ export function generateTournament(
               nextStageTeams.push(group.teams[0]);
             }
           }
-          
+        }
+        
+        // Then collect runner-ups in the same deterministic order
+        for (const group of groups) {
           // Add runner-ups if they advance to next stage (exclude eliminated)
           if (stageConfig.runnerUpDestination.type === 'NextStage' &&
               stageConfig.runnerUpDestination.stageIndex === nextStageNumber) {

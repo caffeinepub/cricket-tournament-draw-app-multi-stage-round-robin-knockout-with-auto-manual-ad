@@ -1,92 +1,97 @@
 import { useMemo } from 'react';
-import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowRight, Info, X } from 'lucide-react';
+import { ArrowRight, Users, Trophy, X } from 'lucide-react';
+import { RoundRobinRoundConfig, StageAdvancementConfig } from '../features/tournament/types';
 import { formatDestination } from '../features/tournament/validation';
 
-export default function Stage2GroupAssignmentPanel() {
-  const { roundRobinRounds, stageAdvancementConfigs } = useTournamentStore();
+interface Stage2GroupAssignmentPanelProps {
+  roundRobinRounds: RoundRobinRoundConfig[];
+  stageAdvancementConfigs: StageAdvancementConfig[];
+}
 
-  const stageFlows = useMemo(() => {
-    return roundRobinRounds.map(round => {
-      const config = stageAdvancementConfigs.find(c => c.stageNumber === round.roundNumber);
-      
-      if (!config) {
-        return {
-          stageNumber: round.roundNumber,
-          groupCount: round.groupCount,
-          winnersTo: 'Not configured',
-          runnersUpTo: 'Not configured',
-          winnersCount: 0,
-          runnersUpCount: 0,
-          runnersUpEliminated: false,
-        };
-      }
-
-      const winnersTo = formatDestination(config.winnerDestination);
-      const runnersUpTo = formatDestination(config.runnerUpDestination);
-      const runnersUpEliminated = config.runnerUpDestination.type === 'Eliminated';
-
+export default function Stage2GroupAssignmentPanel({
+  roundRobinRounds,
+  stageAdvancementConfigs,
+}: Stage2GroupAssignmentPanelProps) {
+  // Build stage flow visualization
+  const stageFlow = useMemo(() => {
+    return roundRobinRounds.map((round) => {
+      const config = stageAdvancementConfigs.find((c) => c.stageNumber === round.roundNumber);
       return {
-        stageNumber: round.roundNumber,
+        roundNumber: round.roundNumber,
         groupCount: round.groupCount,
-        winnersTo,
-        runnersUpTo,
-        winnersCount: round.groupCount,
-        runnersUpCount: runnersUpEliminated ? 0 : round.groupCount,
-        runnersUpEliminated,
+        winnerDestination: config?.winnerDestination,
+        runnerUpDestination: config?.runnerUpDestination,
       };
     });
   }, [roundRobinRounds, stageAdvancementConfigs]);
 
+  if (roundRobinRounds.length <= 1) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Stage Flow Preview</CardTitle>
+        <CardTitle>Stage Flow Preview</CardTitle>
         <CardDescription>
-          How teams advance between round-robin stages and to knockout
+          How teams advance between round-robin stages and to knockout. Robin Round 2 is populated exclusively from Robin Round 1 runner-ups in deterministic group order.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {stageFlows.map((flow, index) => (
-          <div key={flow.stageNumber} className="space-y-2">
-            <div className="font-medium text-sm">Robin Round {flow.stageNumber}</div>
-            <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant="default" className="text-xs">
-                  {flow.winnersCount} Winners
-                </Badge>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <span className="text-muted-foreground">{flow.winnersTo}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant={flow.runnersUpEliminated ? "destructive" : "secondary"} className="text-xs">
-                  {flow.groupCount} Runners-up
-                </Badge>
-                {flow.runnersUpEliminated ? (
-                  <>
-                    <X className="h-3 w-3 text-destructive" />
-                    <span className="text-destructive">{flow.runnersUpTo}</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-muted-foreground">{flow.runnersUpTo}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+      <CardContent>
+        <div className="space-y-4">
+          {stageFlow.map((stage, index) => (
+            <div key={stage.roundNumber}>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold">Robin Round {stage.roundNumber}</span>
+                  <Badge variant="secondary" className="ml-auto">
+                    {stage.groupCount} {stage.groupCount === 1 ? 'Group' : 'Groups'}
+                  </Badge>
+                </div>
 
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            Configure each stage's advancement rules to control team flow through the tournament.
-          </AlertDescription>
-        </Alert>
+                <div className="space-y-2 text-sm">
+                  {stage.winnerDestination && (
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-muted-foreground">Winners:</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Badge variant="outline" className="font-normal">
+                        {formatDestination(stage.winnerDestination)}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {stage.runnerUpDestination && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <span className="text-muted-foreground">Runners-up:</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      {stage.runnerUpDestination.type === 'Eliminated' ? (
+                        <Badge variant="destructive" className="font-normal">
+                          <X className="mr-1 h-3 w-3" />
+                          Eliminated
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="font-normal">
+                          {formatDestination(stage.runnerUpDestination)}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {index < stageFlow.length - 1 && (
+                <div className="my-2 flex justify-center">
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

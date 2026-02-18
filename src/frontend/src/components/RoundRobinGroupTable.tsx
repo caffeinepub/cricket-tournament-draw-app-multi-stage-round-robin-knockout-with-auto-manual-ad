@@ -6,13 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Check, X, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
+import { getOriginGroupSerial } from '../features/tournament/originGroupSerial';
 
 interface RoundRobinGroupTableProps {
   stage: Stage;
 }
 
 export default function RoundRobinGroupTable({ stage }: RoundRobinGroupTableProps) {
-  const { updateTeamName, updateTeamPosition, updateGroupName } = useTournamentStore();
+  const { updateTeamName, updateTeamPosition, updateGroupName, stages } = useTournamentStore();
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
@@ -146,7 +147,15 @@ export default function RoundRobinGroupTable({ stage }: RoundRobinGroupTableProp
 
                 const isEditing = editingTeamId === team.id;
                 const currentPosition = index + 1;
-                const serialNumber = `${group.name}-${currentPosition}`;
+                
+                // For Stage 2 (Robin Round 2), show origin group serial
+                let serialNumber: string;
+                if (stage.stageNumber === 2) {
+                  const originSerial = getOriginGroupSerial(team.id, stages);
+                  serialNumber = originSerial || `${group.name}-${currentPosition}`;
+                } else {
+                  serialNumber = `${group.name}-${currentPosition}`;
+                }
 
                 return (
                   <div

@@ -3,10 +3,13 @@ import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shuffle, Lock, Unlock } from 'lucide-react';
+import { Shuffle, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { getQualifiedTeamsForKnockout } from '../features/tournament/qualification';
 import { getFirstEnabledRound } from '../features/tournament/knockoutRounds';
+import { getFixtureCodeForMatch } from '../features/tournament/knockoutFixtureCode';
+import { toast } from 'sonner';
 
 export default function KnockoutPairingEditor() {
   const {
@@ -14,11 +17,13 @@ export default function KnockoutPairingEditor() {
     setKnockoutPairingMode,
     knockoutFixtureAssignments,
     assignKnockoutFixture,
+    validateManualPairing,
     stages,
     stageAdvancementConfigs,
     knockoutStages,
     roundRobinRounds,
     knockoutMatches,
+    knockoutWarnings,
   } = useTournamentStore();
 
   // Get qualified teams using shared utility
@@ -41,96 +46,142 @@ export default function KnockoutPairingEditor() {
   const handleModeToggle = () => {
     const newMode = knockoutPairingMode === 'auto' ? 'manual' : 'auto';
     setKnockoutPairingMode(newMode);
+    toast.success(`Switched to ${newMode} pairing mode`);
   };
 
   const handleTeamAssignment = (matchId: string, position: 'team1' | 'team2', teamId: string) => {
     const currentAssignment = knockoutFixtureAssignments.find(a => a.matchId === matchId);
     
-    assignKnockoutFixture({
+    const newAssignment = {
       matchId,
       team1Id: position === 'team1' ? teamId : currentAssignment?.team1Id,
       team2Id: position === 'team2' ? teamId : currentAssignment?.team2Id,
-    });
+    };
+
+    // Validate the pairing
+    const warnings = validateManualPairing(newAssignment);
+    if (warnings.length > 0) {
+      toast.warning('Pairing Warning', {
+        description: warnings.join(' '),
+      });
+    }
+
+    assignKnockoutFixture(newAssignment);
   };
 
-  if (firstRoundMatches.length === 0) {
-    return null;
+  if (qualifiedTeams.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Knockout Pairing</CardTitle>
+          <CardDescription>Configure first-round matchups</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            No qualified teams yet. Complete the group stage configuration first.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <CardTitle className="text-lg">Knockout Pairing</CardTitle>
+            <CardTitle>Knockout Pairing</CardTitle>
             <CardDescription>
-              Configure how teams are paired in the first knockout round
+              {knockoutPairingMode === 'auto' 
+                ? 'Automatic pairing with rematch avoidance' 
+                : 'Manually assign teams to first-round matches'}
             </CardDescription>
           </div>
           <Button
-            variant={knockoutPairingMode === 'manual' ? 'default' : 'outline'}
-            size="sm"
             onClick={handleModeToggle}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
           >
-            {knockoutPairingMode === 'manual' ? (
+            {knockoutPairingMode === 'auto' ? (
               <>
-                <Lock className="h-4 w-4 mr-2" />
-                Manual
+                <Unlock className="mr-2 h-4 w-4" />
+                Switch to Manual
               </>
             ) : (
               <>
-                <Unlock className="h-4 w-4 mr-2" />
-                Auto
+                <Lock className="mr-2 h-4 w-4" />
+                Switch to Auto
               </>
             )}
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {knockoutPairingMode === 'auto' ? (
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
-            <Shuffle className="h-4 w-4" />
-            <span>Teams are automatically paired in order of qualification</span>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground mb-4">
-              Manually assign teams to each match fixture
-            </div>
-            
-            {/* Qualified Teams Pool */}
-            <div className="mb-4">
-              <div className="text-sm font-medium mb-2">Available Teams ({qualifiedTeams.length})</div>
-              <div className="flex flex-wrap gap-2">
-                {qualifiedTeams.map(team => (
-                  <Badge key={team.id} variant="outline">
-                    {team.name}
-                  </Badge>
-                ))}
+      <CardContent>
+        <div className="space-y-4">
+          {knockoutPairingMode === 'auto' ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <div className="flex items-start gap-3">
+                  <Shuffle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Automatic Pairing Active</p>
+                    <p className="text-sm text-muted-foreground">
+                      Teams are automatically arranged to minimize rematches from the group stage. 
+                      Teams that already played will be placed in opposite bracket halves when possible.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Match Assignments */}
-            <div className="space-y-3">
-              {firstRoundMatches.map((match, index) => {
+              {/* Display reseeding warnings in auto mode (English-only, no emoji) */}
+              {knockoutWarnings.reseedingWarnings.length > 0 && (
+                <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                    <div className="font-semibold mb-2">Bracket Constraints</div>
+                    <div className="space-y-1">
+                      {knockoutWarnings.reseedingWarnings.map((warning, idx) => (
+                        <div key={idx} className="text-xs leading-relaxed">{warning}</div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {firstRoundMatches.map((match) => {
+                const fixtureCode = getFixtureCodeForMatch(match, knockoutMatches);
                 const assignment = knockoutFixtureAssignments.find(a => a.matchId === match.id);
-                
+
                 return (
-                  <div key={match.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="font-medium text-sm">Match {index + 1}</div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Team 1</label>
+                  <div key={match.id} className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      {fixtureCode && (
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {fixtureCode}
+                        </Badge>
+                      )}
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Match {match.id.split('-').pop()}
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Team 1
+                        </label>
                         <Select
-                          value={assignment?.team1Id || match.team1.id}
+                          value={assignment?.team1Id || ''}
                           onValueChange={(value) => handleTeamAssignment(match.id, 'team1', value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
+                            <SelectValue placeholder="Select team..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {qualifiedTeams.map(team => (
+                            {qualifiedTeams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                               </SelectItem>
@@ -138,18 +189,20 @@ export default function KnockoutPairingEditor() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Team 2</label>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Team 2
+                        </label>
                         <Select
-                          value={assignment?.team2Id || match.team2.id}
+                          value={assignment?.team2Id || ''}
                           onValueChange={(value) => handleTeamAssignment(match.id, 'team2', value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
+                            <SelectValue placeholder="Select team..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {qualifiedTeams.map(team => (
+                            {qualifiedTeams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                               </SelectItem>
@@ -162,8 +215,8 @@ export default function KnockoutPairingEditor() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );

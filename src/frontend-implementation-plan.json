@@ -1,79 +1,83 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Tournament Builder: sequential group letters across rounds + unique editable group names",
+  "title": "Originating group serial prefixes for Robin Round 2 and Pre-Quarter Finals",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Assign round-robin group letters sequentially across all rounds so later rounds continue from prior rounds’ last group.",
+      "summary": "Show each Robin Round 2 team as \"<OriginGroup>-<OriginPosition> <TeamName>\" across Stage 2 group tables and match listings, computed from the earliest stage the team appears in, as a display-only change.",
       "acceptanceCriteria": [
-        "Given roundRobinRounds = [{roundNumber:1, groupCount:12},{roundNumber:2, groupCount:4}], generated stage-1 group names are A through L and generated stage-2 group names are M through P.",
-        "Group naming continues correctly across any number of rounds by offsetting the group-name index by the total number of groups in prior rounds.",
-        "No generated group name is duplicated across all generated stages."
+        "In Robin Round 2, where the UI previously showed a team as \"Team X\", it now shows \"<OriginGroup>-<OriginPosition> Team X\" (e.g., \"A-2 Team 2\").",
+        "The origin group serial number is computed based on where the team originally appears in the tournament stages (smallest stageNumber containing that team), not the team’s current Robin Round 2 group/position.",
+        "No tournament state shape changes are introduced (no changes to frontend/src/features/tournament/types.ts interfaces and no backend changes)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/generation.ts",
+          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
           "operation": "modify",
-          "description": "Update round-robin group creation to compute a running group-name offset (sum of groupCount from prior rounds) and call generateGroupName(offset + g) so group letters continue sequentially across stages."
+          "description": "For Stage 2 (Robin Round 2) only, render team labels using the resolved origin group serial prefix in the format \"<OriginGroup>-<OriginPosition> <TeamName>\" while keeping editing behavior unchanged (editing still edits only the underlying team.name). Use the shared origin-resolution helper and gracefully fall back to the current display when origin cannot be resolved."
+        },
+        {
+          "path": "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "operation": "modify",
+          "description": "Update round-robin match team label formatting so that when the match belongs to Stage 2 (stageNumber === 2), the display uses the origin group serial prefix \"<OriginGroup>-<OriginPosition> <TeamName>\" derived from the earliest stage containing that team; otherwise keep existing behavior. Use the shared origin-resolution helper and fall back to the prior formatting if origin cannot be resolved."
+        },
+        {
+          "path": "frontend/src/pages/FullSchedulePage.tsx",
+          "operation": "modify",
+          "description": "Ensure Robin Round 2 match listings shown on the Full Schedule page pick up the updated Stage 2-specific formatting (origin group serial prefix with hyphen) via the shared round-robin display formatter, without altering any tournament data or models."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Allow users to rename round-robin group names inline while preventing duplicates across the entire tournament and showing a clear error when blocked.",
+      "summary": "Show qualified (non-placeholder) teams in Pre-Quarter Final knockout views as \"<OriginGroup>-<OriginPosition> <TeamName>\" while keeping placeholders (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") unchanged.",
       "acceptanceCriteria": [
-        "Group headers in the round-robin groups UI can be switched into an editable state and saved by the user.",
-        "If the user attempts to rename a group to a name already used by any other group in any stage, the UI blocks the change and shows a clear English error message.",
-        "If the user renames a group to a unique value, the updated group name is reflected everywhere that group name is shown (e.g., group tables and schedule views) without requiring a regeneration reset."
+        "On knockout views that include Pre-Quarter Finals (including any schedule/bracket listing), real teams display as \"<OriginGroup>-<OriginPosition> <TeamName>\".",
+        "Placeholder entries continue to display exactly as placeholders (e.g., \"PQ1\" remains \"PQ1\", \"TBD\" remains \"TBD\").",
+        "If the two sides of a pre-quarter-final match originate from different groups, each side displays its own correct originating group serial."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
+          "path": "frontend/src/pages/KnockoutPage.tsx",
           "operation": "modify",
-          "description": "Add an editable state for the group header (e.g., click-to-edit) and wire save/cancel interactions. Use shadcn-ui Input (and any needed composed controls) for the inline editor; Verify the component's usage instructions before implementing. On save, call the store group-rename action; if the new name conflicts with any existing group name in any stage, block the update and display a clear English error (e.g., via sonner toast)."
+          "description": "When rendering knockout matches, detect placeholder labels using the existing placeholder utilities and keep them unchanged; for real teams, prefix with the resolved origin group serial \"<OriginGroup>-<OriginPosition>\" (hyphenated) before the team name. Use the shared origin-resolution helper and fall back to the existing label if origin cannot be resolved."
+        },
+        {
+          "path": "frontend/src/pages/FullSchedulePage.tsx",
+          "operation": "modify",
+          "description": "In the knockout section of the Full Schedule page, keep placeholder rendering exactly as-is; for real teams, display the origin-prefixed label \"<OriginGroup>-<OriginPosition> <TeamName>\" using the shared origin-resolution helper, with graceful fallback when origin cannot be determined."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add a client-store action to update a group name by stageId + groupId and ensure all dependent UI updates.",
+      "summary": "Add a shared frontend helper to resolve a team’s originating group serial from existing in-memory stages and use it consistently in Robin Round 2 and Pre-Quarter Final displays.",
       "acceptanceCriteria": [
-        "There is a store action to update a specific group name identified by stageId and groupId.",
-        "Updating a group name updates the group in the relevant stage in state and causes React views using that state to re-render accordingly.",
-        "Existing behaviors for updating team names and team positions remain unchanged."
+        "Origin group serial resolution works purely from existing tournament state (stages/groups/teams) and does not modify team names or store new fields.",
+        "If an origin cannot be determined (unexpected/missing data), the UI falls back gracefully to the existing team display without breaking rendering.",
+        "The format uses a hyphen between group letter and position (\"A-2\", not \"A2\")."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/useTournamentStore.ts",
-          "operation": "modify",
-          "description": "Add an updateGroupName(stageId, groupId, newName) action that updates the group name in the appropriate stage within state. Include a store-level uniqueness check against all group names across all stages (excluding the current group) and return a success/failure result (or equivalent) so the UI can block duplicates without requiring regeneration."
+          "path": "frontend/src/features/tournament/originGroupSerial.ts",
+          "operation": "create",
+          "description": "Create a shared helper that scans the current in-memory tournament stages to find the earliest (smallest stageNumber) stage/group containing a given team id, returning a hyphenated origin serial string (e.g., \"A-2\") and/or a formatter that produces \"<OriginGroup>-<OriginPosition> <TeamName>\". Ensure it is display-only and provides a safe fallback when origin cannot be resolved."
         },
         {
-          "path": "frontend/src/features/tournament/types.ts",
+          "path": "frontend/src/features/tournament/roundRobinDisplayCode.ts",
           "operation": "modify",
-          "description": "Update the TournamentStore/action typing as needed to include the new updateGroupName action and its return shape (if applicable), without changing existing team update and position reorder behaviors."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Ensure Round 2 (and any later round) group UI uses the same serial numbering and position-reorder dropdown as Round 1, and updates serials after group rename.",
-      "acceptanceCriteria": [
-        "For any stage (including Robin Round 2), each team row shows a serial number in the format \"{groupName}-{position}\" consistent with Robin Round 1.",
-        "For any stage (including Robin Round 2), each team row includes the position dropdown and changing it reorders the teams within that group.",
-        "After a group rename, serial numbers update to use the new group name."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/StageSchedulePage.tsx",
-          "operation": "modify",
-          "description": "Update the groups view to render the round-robin group UI for all generated round-robin stages (not only stageNumber===1), ensuring Robin Round 2 is shown using the existing RoundRobinGroupTable so it inherits the same serial-number format and position dropdown behavior."
+          "description": "Integrate the shared origin serial helper so Robin Round 2 match team labels can use the origin-based prefix while preserving existing formatting for other stages and providing graceful fallback behavior."
         },
         {
           "path": "frontend/src/components/RoundRobinGroupTable.tsx",
           "operation": "modify",
-          "description": "Ensure the serial-number display remains derived from the live group.name value (\"{groupName}-{position}\") so renames immediately reflect in-row serial numbers for every stage."
+          "description": "Integrate the shared origin serial helper so Stage 2 team labels show the origin-based prefix without changing underlying team/group/stage models and with graceful fallback when origin cannot be resolved."
+        },
+        {
+          "path": "frontend/src/pages/KnockoutPage.tsx",
+          "operation": "modify",
+          "description": "Use the shared origin serial helper to format real (non-placeholder) team labels in Pre-Quarter Final knockout rendering, while preserving existing placeholder display logic and providing graceful fallback."
         }
       ]
     }

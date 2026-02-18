@@ -93,14 +93,14 @@ export function validateTimeFormat(time: string): boolean {
 }
 
 /**
- * Format a destination for display
+ * Format a destination for display (English-only, no off-by-one errors)
  */
 export function formatDestination(destination: AdvancementDestination): string {
   if (destination.type === 'Eliminated') {
     return 'Eliminated';
   }
   if (destination.type === 'NextStage') {
-    return `Round ${destination.stageIndex + 1}`;
+    return `Robin Round ${destination.stageIndex}`;
   }
   return destination.entryPoint.replace('finals', '-Finals');
 }

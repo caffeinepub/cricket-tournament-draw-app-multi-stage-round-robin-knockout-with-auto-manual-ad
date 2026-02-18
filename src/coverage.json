@@ -1,60 +1,58 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T08:05:53.367Z",
+  "generatedAt": "2026-02-18T13:05:03.202Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
+        "summary": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/tournament/generation.ts"
+          "frontend/src/components/RoundRobinGroupTable.tsx",
+          "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "frontend/src/pages/FullSchedulePage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/tournament/generation.ts"
+          "frontend/src/components/RoundRobinGroupTable.tsx",
+          "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "frontend/src/pages/FullSchedulePage.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+        "summary": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/RoundRobinGroupTable.tsx"
+          "frontend/src/pages/KnockoutPage.tsx",
+          "frontend/src/pages/FullSchedulePage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/RoundRobinGroupTable.tsx"
+          "frontend/src/pages/KnockoutPage.tsx",
+          "frontend/src/pages/FullSchedulePage.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+        "summary": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/tournament/useTournamentStore.ts",
-          "frontend/src/features/tournament/types.ts"
+          "frontend/src/features/tournament/originGroupSerial.ts",
+          "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "frontend/src/components/RoundRobinGroupTable.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/tournament/useTournamentStore.ts"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/StageSchedulePage.tsx",
-          "frontend/src/components/RoundRobinGroupTable.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/StageSchedulePage.tsx",
-          "frontend/src/components/RoundRobinGroupTable.tsx"
+          "frontend/src/features/tournament/originGroupSerial.ts",
+          "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "frontend/src/components/RoundRobinGroupTable.tsx",
+          "frontend/src/pages/KnockoutPage.tsx"
         ]
       }
     ]
@@ -65,9 +63,10 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/RoundRobinGroupTable.tsx",
-    "frontend/src/features/tournament/generation.ts",
-    "frontend/src/features/tournament/useTournamentStore.ts",
-    "frontend/src/pages/StageSchedulePage.tsx",
+    "frontend/src/features/tournament/originGroupSerial.ts",
+    "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+    "frontend/src/pages/FullSchedulePage.tsx",
+    "frontend/src/pages/KnockoutPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

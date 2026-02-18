@@ -3,12 +3,19 @@ import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CalendarDays, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { KNOCKOUT_ROUND_ORDER } from '../features/tournament/knockoutRounds';
+import { formatRoundRobinTeamDisplay } from '../features/tournament/roundRobinDisplayCode';
+import { getFixtureCodeForMatch } from '../features/tournament/knockoutFixtureCode';
+import { getPlaceholderDisplayLabel, isPlaceholderTeam } from '../features/tournament/knockoutPlaceholders';
+import { KnockoutWinnerSelector } from '../components/KnockoutWinnerSelector';
+import { formatTeamWithOriginSerial } from '../features/tournament/originGroupSerial';
+import { toast } from 'sonner';
 
 export default function FullSchedulePage() {
-  const { stages, knockoutMatches, setCurrentView } = useTournamentStore();
+  const { stages, knockoutMatches, knockoutWarnings, setCurrentView, setKnockoutWinner } = useTournamentStore();
 
   // Group knockout matches by round using canonical ordering
   const knockoutMatchesByRound = useMemo(() => {
@@ -37,6 +44,35 @@ export default function FullSchedulePage() {
 
   const handleProceedToKnockout = () => {
     setCurrentView('knockout');
+  };
+
+  const handleSelectWinner = (matchId: string, winnerId: string) => {
+    setKnockoutWinner(matchId, winnerId);
+    toast.success('Winner updated');
+  };
+
+  /**
+   * Format team display for knockout matches.
+   * For real teams, use origin group serial prefix.
+   * For placeholders, keep them as-is.
+   */
+  const formatKnockoutTeamDisplay = (teamName: string): string => {
+    if (!teamName || isPlaceholderTeam(teamName)) {
+      return getPlaceholderDisplayLabel(teamName);
+    }
+    
+    // Find the team in stages to get origin serial
+    for (const stage of stages) {
+      for (const group of stage.groups) {
+        const team = group.teams.find((t) => t.name === teamName);
+        if (team) {
+          return formatTeamWithOriginSerial(team, stages);
+        }
+      }
+    }
+    
+    // Fallback to team name if not found
+    return teamName;
   };
 
   return (
@@ -100,23 +136,28 @@ export default function FullSchedulePage() {
                         </Badge>
                       </div>
                       <div className="space-y-2">
-                        {groupMatches.map((match) => (
-                          <div
-                            key={match.id}
-                            className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="font-medium">{match.team1.name}</span>
-                              <span className="text-muted-foreground">vs</span>
-                              <span className="font-medium">{match.team2.name}</span>
-                            </div>
-                            {match.date && match.time && (
-                              <div className="text-xs text-muted-foreground sm:text-sm">
-                                {match.date} at {match.time}
+                        {groupMatches.map((match) => {
+                          const team1Display = formatRoundRobinTeamDisplay(match, match.team1, stages);
+                          const team2Display = formatRoundRobinTeamDisplay(match, match.team2, stages);
+
+                          return (
+                            <div
+                              key={match.id}
+                              className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="font-medium">{team1Display}</span>
+                                <span className="text-muted-foreground">vs</span>
+                                <span className="font-medium">{team2Display}</span>
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              {match.date && match.time && (
+                                <div className="text-xs text-muted-foreground sm:text-sm">
+                                  {match.date} at {match.time}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -142,6 +183,19 @@ export default function FullSchedulePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                {/* Reseeding Warnings */}
+                {knockoutWarnings.reseedingWarnings.length > 0 && (
+                  <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                    <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                      <div className="font-semibold mb-1">Bracket Constraints</div>
+                      {knockoutWarnings.reseedingWarnings.map((warning, idx) => (
+                        <div key={idx} className="mt-1">{warning}</div>
+                      ))}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {Array.from(knockoutMatchesByRound.entries()).map(([round, matches]) => (
                   <div key={round} className="space-y-3">
                     <div className="flex items-center gap-2">
@@ -151,27 +205,45 @@ export default function FullSchedulePage() {
                       </Badge>
                     </div>
                     <div className="space-y-2">
-                      {matches.map((match) => (
-                        <div
-                          key={match.id}
-                          className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="font-medium">
-                              {match.team1?.name || 'TBD'}
-                            </span>
-                            <span className="text-muted-foreground">vs</span>
-                            <span className="font-medium">
-                              {match.team2?.name || 'TBD'}
-                            </span>
-                          </div>
-                          {match.date && match.time && (
-                            <div className="text-xs text-muted-foreground sm:text-sm">
-                              {match.date} at {match.time}
+                      {matches.map((match) => {
+                        const fixtureCode = getFixtureCodeForMatch(match, knockoutMatches);
+                        const team1Display = match.team1 ? formatKnockoutTeamDisplay(match.team1.name) : 'TBD';
+                        const team2Display = match.team2 ? formatKnockoutTeamDisplay(match.team2.name) : 'TBD';
+                        
+                        return (
+                          <div
+                            key={match.id}
+                            className="flex flex-col gap-3 rounded-lg border bg-card p-3"
+                          >
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex items-center gap-2 text-sm">
+                                {fixtureCode && (
+                                  <Badge variant="secondary" className="font-mono text-xs">
+                                    {fixtureCode}
+                                  </Badge>
+                                )}
+                                <span className="font-medium">
+                                  {team1Display}
+                                </span>
+                                <span className="text-muted-foreground">vs</span>
+                                <span className="font-medium">
+                                  {team2Display}
+                                </span>
+                              </div>
+                              {match.date && match.time && (
+                                <div className="text-xs text-muted-foreground sm:text-sm">
+                                  {match.date} at {match.time}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            
+                            <KnockoutWinnerSelector
+                              match={match}
+                              onSelectWinner={handleSelectWinner}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

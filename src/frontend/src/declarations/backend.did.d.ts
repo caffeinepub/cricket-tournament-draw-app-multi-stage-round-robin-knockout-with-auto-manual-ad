@@ -15,13 +15,23 @@ export type AdvancementType = { 'KnockoutEntry' : KnockoutEntryType } |
 export type KnockoutEntryType = { 'PreQuarterfinals' : null } |
   { 'Semifinals' : null } |
   { 'Quarterfinals' : null };
+export interface RoundRobinStageConfig {
+  'id' : bigint,
+  'advancementRuleWinner' : AdvancementType,
+  'advancementRuleRunnerUp' : AdvancementType,
+}
+export interface Stage {
+  'id' : bigint,
+  'name' : string,
+  'stageType' : StageType,
+}
+export type StageType = { 'Knockout' : null } |
+  { 'RoundRobin' : RoundRobinStageConfig };
 export interface _SERVICE {
   'addGroup' : ActorMethod<[bigint, string], undefined>,
-  'addStage' : ActorMethod<[bigint, string], undefined>,
-  'createRoundRobinStageConfig' : ActorMethod<
-    [bigint, AdvancementType, AdvancementType],
-    undefined
-  >,
+  'addStage' : ActorMethod<[bigint, string, StageType], undefined>,
+  'getAllStages' : ActorMethod<[], Array<[bigint, Stage]>>,
+  'getStage' : ActorMethod<[bigint], [] | [Stage]>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

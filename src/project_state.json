@@ -1,40 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Round-robin tournament feature: enforce unique group names/letters across rounds, auto-assign sequential group letters per round with manual rename constraints, and keep consistent team serial numbering + team position rearrangement UI in Round 2 similar to Round 1.",
-  "architectural_notes": [],
+  "summary": "Tournament app update: in Robin Round 2 and Pre-Quarter Final screens, show qualifying teams with their originating group serial number alongside the team name (display-only).",
+  "architectural_notes": [
+    "Display-only formatting change: prepend originating group serial (e.g., A-2) to qualifying team labels in Robin Round 2 and Pre-Quarter Final; no data model changes."
+  ],
   "known_issues": [],
-  "isFixRequest": true,
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-round-robin-stage-generation-so-group-letters-are-assigned-sequentially-across-rounds-e-g-if-robin-round-1-has-12-groups-a-l-then-robin-round-2-with-4-groups-must-be-m-p-rather-than-restarting-at-a-each-round",
-      "title": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
+      "id": "feature-update-the-robin-round-2-ui-so-that-any-team-displayed-in-robin-round-2-including-match-listings-shows-its-originating-group-serial-number-alongside-the-team-name-in-the-format-groupletter-position-teamname-example-a-2-team-2-using-the-group-serial-from-the-stage-the-team-originally-came-from-typically-robin-round-1-this-must-be-a-display-only-change-do-not-change-persisted-data-or-the-underlying-team-stage-models",
+      "title": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-the-ability-for-users-to-manually-rename-a-group-name-letter-in-the-round-robin-group-ui-while-blocking-any-rename-that-would-reuse-an-existing-group-name-used-anywhere-else-in-the-tournament-including-names-used-in-robin-round-1",
-      "title": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+      "id": "feature-update-the-pre-quarter-final-knockout-screens-so-that-when-a-qualified-non-placeholder-team-is-displayed-it-is-shown-as-origingroup-originposition-teamname-example-a-2-team-2-using-the-team-s-originating-group-serial-number-placeholder-labels-e-g-pq1-tbd-winner-of-must-continue-to-render-as-placeholders-and-must-not-receive-a-group-serial-prefix",
+      "title": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-extend-the-tournament-client-state-store-with-an-action-to-update-a-group-name-by-stageid-groupid-and-ensure-downstream-displays-serial-numbers-schedules-reflect-the-updated-group-name",
-      "title": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+      "id": "feature-add-a-shared-frontend-helper-to-compute-a-team-s-originating-group-serial-number-by-scanning-the-existing-in-memory-tournament-stages-no-new-persisted-fields-and-use-it-consistently-for-the-robin-round-2-and-pre-quarter-final-displays",
+      "title": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
       "reqIds": [
         "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-robin-round-2-groups-show-the-same-team-serial-numbering-format-and-the-same-dropdown-control-to-rearrange-team-positions-as-in-robin-round-1",
-      "title": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -42,24 +36,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Block reuse of Round 1 group names/letters in Round 2 (enforce uniqueness across rounds).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Auto-assign group letters sequentially across rounds (e.g., Round 1 A–L then Round 2 starts M–P); allow manual rename but block reused letters.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "In Round 2 groups, use the same team serial numbering pattern as Round 1 and include the same dropdown control to rearrange team positions.",
+      "summary": "In Robin Round 2 and Pre-Quarter Final, display qualifying team labels as \"<GroupSerial>-<TeamName>\" (e.g., \"A-2 Team 2\") using the team’s originating group serial number; display-only change.",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Tournament Builder",
+  "projectName": "Tournament Bracket",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

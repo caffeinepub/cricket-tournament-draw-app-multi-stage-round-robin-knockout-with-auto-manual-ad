@@ -17,15 +17,26 @@ export const AdvancementType = IDL.Variant({
   'KnockoutEntry' : KnockoutEntryType,
   'NextStage' : IDL.Nat,
 });
+export const RoundRobinStageConfig = IDL.Record({
+  'id' : IDL.Nat,
+  'advancementRuleWinner' : AdvancementType,
+  'advancementRuleRunnerUp' : AdvancementType,
+});
+export const StageType = IDL.Variant({
+  'Knockout' : IDL.Null,
+  'RoundRobin' : RoundRobinStageConfig,
+});
+export const Stage = IDL.Record({
+  'id' : IDL.Nat,
+  'name' : IDL.Text,
+  'stageType' : StageType,
+});
 
 export const idlService = IDL.Service({
   'addGroup' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-  'addStage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-  'createRoundRobinStageConfig' : IDL.Func(
-      [IDL.Nat, AdvancementType, AdvancementType],
-      [],
-      [],
-    ),
+  'addStage' : IDL.Func([IDL.Nat, IDL.Text, StageType], [], []),
+  'getAllStages' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Nat, Stage))], []),
+  'getStage' : IDL.Func([IDL.Nat], [IDL.Opt(Stage)], []),
 });
 
 export const idlInitArgs = [];
@@ -40,15 +51,26 @@ export const idlFactory = ({ IDL }) => {
     'KnockoutEntry' : KnockoutEntryType,
     'NextStage' : IDL.Nat,
   });
+  const RoundRobinStageConfig = IDL.Record({
+    'id' : IDL.Nat,
+    'advancementRuleWinner' : AdvancementType,
+    'advancementRuleRunnerUp' : AdvancementType,
+  });
+  const StageType = IDL.Variant({
+    'Knockout' : IDL.Null,
+    'RoundRobin' : RoundRobinStageConfig,
+  });
+  const Stage = IDL.Record({
+    'id' : IDL.Nat,
+    'name' : IDL.Text,
+    'stageType' : StageType,
+  });
   
   return IDL.Service({
     'addGroup' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-    'addStage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-    'createRoundRobinStageConfig' : IDL.Func(
-        [IDL.Nat, AdvancementType, AdvancementType],
-        [],
-        [],
-      ),
+    'addStage' : IDL.Func([IDL.Nat, IDL.Text, StageType], [], []),
+    'getAllStages' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Nat, Stage))], []),
+    'getStage' : IDL.Func([IDL.Nat], [IDL.Opt(Stage)], []),
   });
 };
 

@@ -89,6 +89,23 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface Stage {
+    id: bigint;
+    name: string;
+    stageType: StageType;
+}
+export interface RoundRobinStageConfig {
+    id: bigint;
+    advancementRuleWinner: AdvancementType;
+    advancementRuleRunnerUp: AdvancementType;
+}
+export type StageType = {
+    __kind__: "Knockout";
+    Knockout: null;
+} | {
+    __kind__: "RoundRobin";
+    RoundRobin: RoundRobinStageConfig;
+};
 export type AdvancementType = {
     __kind__: "KnockoutEntry";
     KnockoutEntry: KnockoutEntryType;
@@ -103,10 +120,11 @@ export enum KnockoutEntryType {
 }
 export interface backendInterface {
     addGroup(id: bigint, name: string): Promise<void>;
-    addStage(id: bigint, name: string): Promise<void>;
-    createRoundRobinStageConfig(stageId: bigint, advancementRuleWinner: AdvancementType, advancementRuleRunnerUp: AdvancementType): Promise<void>;
+    addStage(id: bigint, name: string, stageType: StageType): Promise<void>;
+    getAllStages(): Promise<Array<[bigint, Stage]>>;
+    getStage(id: bigint): Promise<Stage | null>;
 }
-import type { AdvancementType as _AdvancementType, KnockoutEntryType as _KnockoutEntryType } from "./declarations/backend.did.d.ts";
+import type { AdvancementType as _AdvancementType, KnockoutEntryType as _KnockoutEntryType, RoundRobinStageConfig as _RoundRobinStageConfig, Stage as _Stage, StageType as _StageType } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async addGroup(arg0: bigint, arg1: string): Promise<void> {
@@ -123,42 +141,198 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async addStage(arg0: bigint, arg1: string): Promise<void> {
+    async addStage(arg0: bigint, arg1: string, arg2: StageType): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.addStage(arg0, arg1);
+                const result = await this.actor.addStage(arg0, arg1, to_candid_StageType_n1(this._uploadFile, this._downloadFile, arg2));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.addStage(arg0, arg1);
+            const result = await this.actor.addStage(arg0, arg1, to_candid_StageType_n1(this._uploadFile, this._downloadFile, arg2));
             return result;
         }
     }
-    async createRoundRobinStageConfig(arg0: bigint, arg1: AdvancementType, arg2: AdvancementType): Promise<void> {
+    async getAllStages(): Promise<Array<[bigint, Stage]>> {
         if (this.processError) {
             try {
-                const result = await this.actor.createRoundRobinStageConfig(arg0, to_candid_AdvancementType_n1(this._uploadFile, this._downloadFile, arg1), to_candid_AdvancementType_n1(this._uploadFile, this._downloadFile, arg2));
-                return result;
+                const result = await this.actor.getAllStages();
+                return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createRoundRobinStageConfig(arg0, to_candid_AdvancementType_n1(this._uploadFile, this._downloadFile, arg1), to_candid_AdvancementType_n1(this._uploadFile, this._downloadFile, arg2));
-            return result;
+            const result = await this.actor.getAllStages();
+            return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getStage(arg0: bigint): Promise<Stage | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getStage(arg0);
+                return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getStage(arg0);
+            return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
         }
     }
 }
-function to_candid_AdvancementType_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AdvancementType): _AdvancementType {
+function from_candid_AdvancementType_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _AdvancementType): AdvancementType {
+    return from_candid_variant_n18(_uploadFile, _downloadFile, value);
+}
+function from_candid_KnockoutEntryType_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _KnockoutEntryType): KnockoutEntryType {
+    return from_candid_variant_n20(_uploadFile, _downloadFile, value);
+}
+function from_candid_RoundRobinStageConfig_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RoundRobinStageConfig): RoundRobinStageConfig {
+    return from_candid_record_n16(_uploadFile, _downloadFile, value);
+}
+function from_candid_StageType_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StageType): StageType {
+    return from_candid_variant_n14(_uploadFile, _downloadFile, value);
+}
+function from_candid_Stage_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Stage): Stage {
+    return from_candid_record_n12(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Stage]): Stage | null {
+    return value.length === 0 ? null : from_candid_Stage_n11(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    name: string;
+    stageType: _StageType;
+}): {
+    id: bigint;
+    name: string;
+    stageType: StageType;
+} {
+    return {
+        id: value.id,
+        name: value.name,
+        stageType: from_candid_StageType_n13(_uploadFile, _downloadFile, value.stageType)
+    };
+}
+function from_candid_record_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    advancementRuleWinner: _AdvancementType;
+    advancementRuleRunnerUp: _AdvancementType;
+}): {
+    id: bigint;
+    advancementRuleWinner: AdvancementType;
+    advancementRuleRunnerUp: AdvancementType;
+} {
+    return {
+        id: value.id,
+        advancementRuleWinner: from_candid_AdvancementType_n17(_uploadFile, _downloadFile, value.advancementRuleWinner),
+        advancementRuleRunnerUp: from_candid_AdvancementType_n17(_uploadFile, _downloadFile, value.advancementRuleRunnerUp)
+    };
+}
+function from_candid_tuple_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [bigint, _Stage]): [bigint, Stage] {
+    return [
+        value[0],
+        from_candid_Stage_n11(_uploadFile, _downloadFile, value[1])
+    ];
+}
+function from_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    Knockout: null;
+} | {
+    RoundRobin: _RoundRobinStageConfig;
+}): {
+    __kind__: "Knockout";
+    Knockout: null;
+} | {
+    __kind__: "RoundRobin";
+    RoundRobin: RoundRobinStageConfig;
+} {
+    return "Knockout" in value ? {
+        __kind__: "Knockout",
+        Knockout: value.Knockout
+    } : "RoundRobin" in value ? {
+        __kind__: "RoundRobin",
+        RoundRobin: from_candid_RoundRobinStageConfig_n15(_uploadFile, _downloadFile, value.RoundRobin)
+    } : value;
+}
+function from_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    KnockoutEntry: _KnockoutEntryType;
+} | {
+    NextStage: bigint;
+}): {
+    __kind__: "KnockoutEntry";
+    KnockoutEntry: KnockoutEntryType;
+} | {
+    __kind__: "NextStage";
+    NextStage: bigint;
+} {
+    return "KnockoutEntry" in value ? {
+        __kind__: "KnockoutEntry",
+        KnockoutEntry: from_candid_KnockoutEntryType_n19(_uploadFile, _downloadFile, value.KnockoutEntry)
+    } : "NextStage" in value ? {
+        __kind__: "NextStage",
+        NextStage: value.NextStage
+    } : value;
+}
+function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    PreQuarterfinals: null;
+} | {
+    Semifinals: null;
+} | {
+    Quarterfinals: null;
+}): KnockoutEntryType {
+    return "PreQuarterfinals" in value ? KnockoutEntryType.PreQuarterfinals : "Semifinals" in value ? KnockoutEntryType.Semifinals : "Quarterfinals" in value ? KnockoutEntryType.Quarterfinals : value;
+}
+function from_candid_vec_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<[bigint, _Stage]>): Array<[bigint, Stage]> {
+    return value.map((x)=>from_candid_tuple_n10(_uploadFile, _downloadFile, x));
+}
+function to_candid_AdvancementType_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AdvancementType): _AdvancementType {
+    return to_candid_variant_n6(_uploadFile, _downloadFile, value);
+}
+function to_candid_KnockoutEntryType_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: KnockoutEntryType): _KnockoutEntryType {
+    return to_candid_variant_n8(_uploadFile, _downloadFile, value);
+}
+function to_candid_RoundRobinStageConfig_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RoundRobinStageConfig): _RoundRobinStageConfig {
+    return to_candid_record_n4(_uploadFile, _downloadFile, value);
+}
+function to_candid_StageType_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StageType): _StageType {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
 }
-function to_candid_KnockoutEntryType_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: KnockoutEntryType): _KnockoutEntryType {
-    return to_candid_variant_n4(_uploadFile, _downloadFile, value);
+function to_candid_record_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    advancementRuleWinner: AdvancementType;
+    advancementRuleRunnerUp: AdvancementType;
+}): {
+    id: bigint;
+    advancementRuleWinner: _AdvancementType;
+    advancementRuleRunnerUp: _AdvancementType;
+} {
+    return {
+        id: value.id,
+        advancementRuleWinner: to_candid_AdvancementType_n5(_uploadFile, _downloadFile, value.advancementRuleWinner),
+        advancementRuleRunnerUp: to_candid_AdvancementType_n5(_uploadFile, _downloadFile, value.advancementRuleRunnerUp)
+    };
 }
 function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    __kind__: "Knockout";
+    Knockout: null;
+} | {
+    __kind__: "RoundRobin";
+    RoundRobin: RoundRobinStageConfig;
+}): {
+    Knockout: null;
+} | {
+    RoundRobin: _RoundRobinStageConfig;
+} {
+    return value.__kind__ === "Knockout" ? {
+        Knockout: value.Knockout
+    } : value.__kind__ === "RoundRobin" ? {
+        RoundRobin: to_candid_RoundRobinStageConfig_n3(_uploadFile, _downloadFile, value.RoundRobin)
+    } : value;
+}
+function to_candid_variant_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     __kind__: "KnockoutEntry";
     KnockoutEntry: KnockoutEntryType;
 } | {
@@ -170,12 +344,12 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     NextStage: bigint;
 } {
     return value.__kind__ === "KnockoutEntry" ? {
-        KnockoutEntry: to_candid_KnockoutEntryType_n3(_uploadFile, _downloadFile, value.KnockoutEntry)
+        KnockoutEntry: to_candid_KnockoutEntryType_n7(_uploadFile, _downloadFile, value.KnockoutEntry)
     } : value.__kind__ === "NextStage" ? {
         NextStage: value.NextStage
     } : value;
 }
-function to_candid_variant_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: KnockoutEntryType): {
+function to_candid_variant_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: KnockoutEntryType): {
     PreQuarterfinals: null;
 } | {
     Semifinals: null;

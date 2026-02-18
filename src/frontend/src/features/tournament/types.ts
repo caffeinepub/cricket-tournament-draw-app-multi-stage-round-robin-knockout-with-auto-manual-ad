@@ -18,6 +18,10 @@ export interface Match {
   groupId?: string;
   stageId?: string;
   round?: string;
+  winnerId?: string;
+  // Stable upstream fixture references for knockout matches
+  team1Source?: string; // e.g., "PQ1" - the fixture code that feeds team1
+  team2Source?: string; // e.g., "PQ2" - the fixture code that feeds team2
 }
 
 export interface Stage {
@@ -70,6 +74,15 @@ export interface KnockoutFixtureAssignment {
   team2Id?: string;
 }
 
+// Knockout generation warnings
+export interface KnockoutWarnings {
+  reseedingWarnings: string[];
+  manualPairingWarnings: string[];
+}
+
+// Knockout winner map: matchId -> winnerId
+export type KnockoutWinnerMap = Record<string, string>;
+
 export interface TournamentState {
   teams: Team[];
   numberOfTeams: number;
@@ -88,4 +101,6 @@ export interface TournamentState {
   isGenerated: boolean;
   knockoutPairingMode: KnockoutPairingMode;
   knockoutFixtureAssignments: KnockoutFixtureAssignment[];
+  knockoutWarnings: KnockoutWarnings;
+  knockoutWinners: KnockoutWinnerMap;
 }

@@ -1,95 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Enforce unique sequential group letters across round-robin rounds + editable group names",
-  "projectName": "Tournament Builder",
+  "title": "Show originating group serial numbers for qualified teams in Robin Round 2 and Pre-Quarter Finals",
+  "projectName": "Tournament Bracket",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
+      "text": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Round 1 Group if 12 teams than A to L and round 2 group if 4 its also A to D but it should Be M to P"
+          "Display formating only in robin round 2 and pre quarter final",
+          "yes like in a group team 2 as per now but i want A-2        2- yes    3- the group serial number from where the team are coming",
+          "build"
         ]
       },
       "acceptanceCriteria": [
-        "Given roundRobinRounds = [{roundNumber:1, groupCount:12},{roundNumber:2, groupCount:4}], generated stage-1 group names are A through L and generated stage-2 group names are M through P.",
-        "Group naming continues correctly across any number of rounds by offsetting the group-name index by the total number of groups in prior rounds.",
-        "No generated group name is duplicated across all generated stages."
+        "In Robin Round 2, where the UI previously showed a team as \"Team X\", it now shows \"<OriginGroup>-<OriginPosition> Team X\" (e.g., \"A-2 Team 2\").",
+        "The origin group serial number is computed based on where the team originally appears in the tournament stages (smallest stageNumber containing that team), not the team’s current Robin Round 2 group/position.",
+        "No tournament state shape changes are introduced (no changes to frontend/src/features/tournament/types.ts interfaces and no backend changes)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+      "text": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "system assigned but user can change manually",
-          "Robin Round 2 Group Name should not repeated as a Is in robin round 1",
-          "2-Block"
+          "Display formating only in robin round 2 and pre quarter final",
+          "the group serial number from where the team are coming",
+          "build"
         ]
       },
       "acceptanceCriteria": [
-        "Group headers in the round-robin groups UI can be switched into an editable state and saved by the user.",
-        "If the user attempts to rename a group to a name already used by any other group in any stage, the UI blocks the change and shows a clear English error message.",
-        "If the user renames a group to a unique value, the updated group name is reflected everywhere that group name is shown (e.g., group tables and schedule views) without requiring a regeneration reset."
+        "On knockout views that include Pre-Quarter Finals (including any schedule/bracket listing), real teams display as \"<OriginGroup>-<OriginPosition> <TeamName>\".",
+        "Placeholder entries continue to display exactly as placeholders (e.g., \"PQ1\" remains \"PQ1\", \"TBD\" remains \"TBD\").",
+        "If the two sides of a pre-quarter-final match originate from different groups, each side displays its own correct originating group serial."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+      "text": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-1"
         ],
         "quotes": [
-          "system assigned but user can change manually"
+          "Yes already there",
+          "Display formating only",
+          "the group serial number from where the team are coming"
         ]
       },
       "acceptanceCriteria": [
-        "There is a store action to update a specific group name identified by stageId and groupId.",
-        "Updating a group name updates the group in the relevant stage in state and causes React views using that state to re-render accordingly.",
-        "Existing behaviors for updating team names and team positions remain unchanged."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "and in robin round 2 group the same serial number as in group of robin round 1 and the same drop down to rearrange teams position"
-        ]
-      },
-      "acceptanceCriteria": [
-        "For any stage (including Robin Round 2), each team row shows a serial number in the format \"{groupName}-{position}\" consistent with Robin Round 1.",
-        "For any stage (including Robin Round 2), each team row includes the position dropdown and changing it reorders the teams within that group.",
-        "After a group rename, serial numbers update to use the new group name."
+        "Origin group serial resolution works purely from existing tournament state (stages/groups/teams) and does not modify team names or store new fields.",
+        "If an origin cannot be determined (unexpected/missing data), the UI falls back gracefully to the existing team display without breaking rendering.",
+        "The format uses a hyphen between group letter and position (\"A-2\", not \"A2\")."
       ]
     }
   ],
   "constraints": [
-    "Frontend files under frontend/src/components/ui and other paths listed in SYSTEM_CONTEXT.frontend.immutablePaths must not be edited directly; compose them instead.",
-    "Keep all backend logic in a single Motoko actor; do not introduce additional backend services. (No backend change is required for this request.)"
+    "Use English for any user-facing text.",
+    "Frontend files under frontend/src/components/ui and the immutable paths listed in SYSTEM_CONTEXT must not be edited.",
+    "Backend must remain single-actor; no backend changes are required for this display-only update."
   ],
   "nonGoals": [
-    "Implementing third-party authentication providers (only Internet Identity is supported).",
-    "Adding real-time multiplayer or websocket-based updates.",
-    "Persisting tournament state to the backend canister (this change should remain in the existing client-side store unless separately requested)."
+    "Do not change or migrate backend state.",
+    "Do not change the tournament data model (e.g., do not add fields to Team/Stage).",
+    "Do not alter how teams qualify or how brackets are generated; only update display formatting for Robin Round 2 and Pre-Quarter Finals."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

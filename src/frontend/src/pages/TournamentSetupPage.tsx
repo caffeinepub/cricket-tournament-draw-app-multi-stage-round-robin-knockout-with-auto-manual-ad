@@ -418,7 +418,10 @@ export default function TournamentSetupPage() {
           {/* Preview Panel */}
           <div className="space-y-6">
             {/* Stage Flow Preview */}
-            <Stage2GroupAssignmentPanel />
+            <Stage2GroupAssignmentPanel 
+              roundRobinRounds={roundConfigs}
+              stageAdvancementConfigs={stageAdvancementConfigs}
+            />
 
             {/* Validation Status */}
             <Card>
@@ -459,7 +462,7 @@ export default function TournamentSetupPage() {
                     <Info className="h-4 w-4" />
                     <AlertTitle>No Knockout Stage</AlertTitle>
                     <AlertDescription>
-                      Enable at least one knockout stage to complete your tournament structure.
+                      Enable at least one knockout stage to proceed with tournament generation.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -468,11 +471,17 @@ export default function TournamentSetupPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button onClick={handleGenerate} className="flex-1" disabled={!isCompatible}>
+              <Button
+                onClick={handleGenerate}
+                disabled={!isCompatible || requiredTeamCount === 0}
+                className="flex-1"
+                size="lg"
+              >
+                <Trophy className="mr-2 h-5 w-5" />
                 {isGenerated ? 'Regenerate Tournament' : 'Generate Tournament'}
               </Button>
               {isGenerated && (
-                <Button onClick={handleReset} variant="outline">
+                <Button onClick={handleReset} variant="outline" size="lg">
                   Reset
                 </Button>
               )}
@@ -497,8 +506,8 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Regenerate Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will regenerate the tournament with your current configuration. All existing matches,
-              team names, and schedules will be reset. This action cannot be undone.
+              This will regenerate the entire tournament with the current configuration. All existing
+              matches, schedules, and results will be replaced. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -514,8 +523,8 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will completely reset the tournament, clearing all data including configuration,
-              matches, and schedules. This action cannot be undone.
+              This will reset the entire tournament to its initial state. All configuration, matches,
+              schedules, and results will be lost. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
