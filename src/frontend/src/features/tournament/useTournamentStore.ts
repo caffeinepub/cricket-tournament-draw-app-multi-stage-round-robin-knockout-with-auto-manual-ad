@@ -11,6 +11,7 @@ import {
   Team,
 } from './types';
 import { generateTournament } from './generation';
+import { generateKnockoutMatches } from './knockoutGenerator';
 
 interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   setNumberOfTeams: (count: number) => void;
@@ -92,11 +93,20 @@ export const useTournamentStore = create<TournamentStore>()(
           name: `Team ${i + 1}`,
         }));
 
-        const { stages, knockoutMatches } = generateTournament(
+        const stages = generateTournament(
           teams,
           roundRobinRounds,
           stageAdvancementConfigs,
-          knockoutStages
+          {} // Empty advancementConfigs object (legacy parameter)
+        );
+
+        const knockoutMatches = generateKnockoutMatches(
+          stages,
+          knockoutStages,
+          stageAdvancementConfigs,
+          roundRobinRounds,
+          knockoutPairingMode,
+          knockoutFixtureAssignments
         );
 
         set({

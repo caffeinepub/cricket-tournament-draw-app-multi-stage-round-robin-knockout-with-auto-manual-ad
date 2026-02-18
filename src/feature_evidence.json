@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-tournament-setup-preset-for-the-requested-group-advancement-structure-round-robin-1-has-12-groups-a-l-where-group-winners-a1-l1-advance-to-knockout-pre-quarterfinals-and-group-runners-up-a2-l2-advance-to-round-robin-2-round-robin-2-has-4-groups-m-p-where-group-winners-m1-p1-advance-to-knockout-pre-quarterfinals-and-round-robin-2-runners-up-are-eliminated",
-      "featureTitle": "Add a tournament setup preset for the requested group/advancement structure: Round-robin 1 has 12 groups (A–L) where group winners (A1–L1) advance to Knockout → Pre-Quarterfinals, and group runners-up (A2–L2) advance to Round-robin 2; Round-robin 2 has 4 groups (M–P) where group winners (M1–P1) advance to Knockout → Pre-Quarterfinals, and Round-robin 2 runners-up are eliminated.",
+      "featureId": "feature-fix-knockout-bracket-generation-so-that-after-pre-quarterfinal-8-matches-subsequent-rounds-generate-the-standard-single-elimination-counts-quarterfinal-4-matches-semifinal-2-matches-final-1-match-instead-of-repeating-8-matches-each-round",
+      "featureTitle": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
       "files": [
-        "frontend/src/features/tournament/useTournamentStore.ts",
-        "frontend/src/pages/TournamentSetupPage.tsx"
+        "frontend/src/features/tournament/knockoutGenerator.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -17,44 +16,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-round-robin-group-naming-so-that-group-letters-continue-across-round-robin-stages-instead-of-restarting-at-a-each-stage-producing-round-1-group-names-a-l-for-12-groups-and-round-2-group-names-m-p-for-4-groups-in-this-configuration",
-      "featureTitle": "Update round-robin group naming so that group letters continue across round-robin stages (instead of restarting at A each stage), producing Round 1 group names A–L for 12 groups and Round 2 group names M–P for 4 groups in this configuration.",
-      "files": [
-        "frontend/src/features/tournament/generation.ts",
-        "frontend/src/features/tournament/groupNaming.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-user-facing-advancement-destination-labels-so-that-a-nextstage-destination-displays-the-actual-robin-round-number-it-points-to-e-g-robin-round-2-and-does-not-display-an-incorrect-round-x-value-derived-by-adding-1-to-the-stage-number",
-      "featureTitle": "Fix user-facing advancement destination labels so that a NextStage destination displays the actual robin round number it points to (e.g., “Robin Round 2”), and does not display an incorrect “Round X” value derived by adding 1 to the stage number.",
-      "files": [
-        "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
-        "frontend/src/features/tournament/validation.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

@@ -1,52 +1,25 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T18:03:19.815Z",
+  "generatedAt": "2026-02-17T17:32:55.986Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a tournament setup preset for the requested group/advancement structure: Round-robin 1 has 12 groups (A–L) where group winners (A1–L1) advance to Knockout → Pre-Quarterfinals, and group runners-up (A2–L2) advance to Round-robin 2; Round-robin 2 has 4 groups (M–P) where group winners (M1–P1) advance to Knockout → Pre-Quarterfinals, and Round-robin 2 runners-up are eliminated.",
+        "summary": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/TournamentSetupPage.tsx",
-          "frontend/src/features/tournament/useTournamentStore.ts"
+          "frontend/src/features/tournament/knockoutGenerator.ts",
+          "frontend/src/pages/KnockoutPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/TournamentSetupPage.tsx",
-          "frontend/src/features/tournament/useTournamentStore.ts"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Update round-robin group naming so that group letters continue across round-robin stages (instead of restarting at A each stage), producing Round 1 group names A–L for 12 groups and Round 2 group names M–P for 4 groups in this configuration.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/features/tournament/groupNaming.ts",
-          "frontend/src/features/tournament/generation.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/features/tournament/groupNaming.ts",
-          "frontend/src/features/tournament/generation.ts"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Fix user-facing advancement destination labels so that a NextStage destination displays the actual robin round number it points to (e.g., “Robin Round 2”), and does not display an incorrect “Round X” value derived by adding 1 to the stage number.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/features/tournament/validation.ts",
-          "frontend/src/components/Stage2GroupAssignmentPanel.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/features/tournament/validation.ts",
-          "frontend/src/components/Stage2GroupAssignmentPanel.tsx"
+          "frontend/src/features/tournament/knockoutGenerator.ts"
         ]
       }
     ]
@@ -56,12 +29,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
-    "frontend/src/features/tournament/generation.ts",
-    "frontend/src/features/tournament/groupNaming.ts",
-    "frontend/src/features/tournament/useTournamentStore.ts",
-    "frontend/src/features/tournament/validation.ts",
-    "frontend/src/pages/TournamentSetupPage.tsx",
+    "frontend/src/features/tournament/knockoutGenerator.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

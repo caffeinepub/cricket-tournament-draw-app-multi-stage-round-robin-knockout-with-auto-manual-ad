@@ -1,92 +1,88 @@
-import { Team, Stage, Group, Match, RoundRobinRoundConfig, StageAdvancementConfig, KnockoutStage } from './types';
+import { Team, Stage, Group, Match, RoundRobinRoundConfig, AdvancementConfig, StageAdvancementConfig } from './types';
 import { generateRoundRobinMatches } from './roundRobinScheduler';
-import { generateKnockoutMatches } from './knockoutGenerator';
-import { generateGroupNameWithOffset } from './groupNaming';
+import { generateGroupName } from './groupNaming';
 
+/**
+ * Generate tournament stages based on multi-round configuration and per-stage advancement configs
+ */
 export function generateTournament(
   teams: Team[],
   roundRobinRounds: RoundRobinRoundConfig[],
   stageAdvancementConfigs: StageAdvancementConfig[],
-  knockoutStages: KnockoutStage
-): { stages: Stage[]; knockoutMatches: Match[] } {
+  advancementConfigs: Record<string, AdvancementConfig>
+): Stage[] {
   const stages: Stage[] = [];
+  
+  // Track teams available for each stage
   let currentTeams = [...teams];
-  let cumulativeGroupOffset = 0;
-
-  // Generate each round-robin stage
+  
   for (let i = 0; i < roundRobinRounds.length; i++) {
     const roundConfig = roundRobinRounds[i];
     const stageNumber = roundConfig.roundNumber;
-    const groupCount = roundConfig.groupCount;
-    const stageConfig = stageAdvancementConfigs.find(c => c.stageNumber === stageNumber);
-
-    // Distribute teams into groups
+    
+    // Create groups for this stage
     const groups: Group[] = [];
-    const teamsPerGroup = Math.floor(currentTeams.length / groupCount);
-    const extraTeams = currentTeams.length % groupCount;
-
+    const teamsPerGroup = Math.floor(currentTeams.length / roundConfig.groupCount);
+    const extraTeams = currentTeams.length % roundConfig.groupCount;
+    
     let teamIndex = 0;
-    for (let g = 0; g < groupCount; g++) {
+    for (let g = 0; g < roundConfig.groupCount; g++) {
       const groupSize = teamsPerGroup + (g < extraTeams ? 1 : 0);
       const groupTeams = currentTeams.slice(teamIndex, teamIndex + groupSize);
       teamIndex += groupSize;
-
-      const groupName = generateGroupNameWithOffset(g, cumulativeGroupOffset);
-      const group: Group = {
+      
+      groups.push({
         id: `stage-${stageNumber}-group-${g}`,
-        name: `Group ${groupName}`,
+        name: generateGroupName(g),
         teams: groupTeams,
-      };
-      groups.push(group);
+      });
     }
-
-    // Update cumulative offset for next stage
-    cumulativeGroupOffset += groupCount;
-
-    // Generate matches for this stage
-    const stageMatches: Match[] = [];
-    const stageId = `stage-${stageNumber}`;
+    
+    // Generate matches for all groups
+    const matches: Match[] = [];
     for (const group of groups) {
-      const groupMatches = generateRoundRobinMatches(group, stageId);
-      stageMatches.push(...groupMatches);
+      const groupMatches = generateRoundRobinMatches(group, `stage-${stageNumber}`);
+      matches.push(...groupMatches);
     }
-
-    const stage: Stage = {
-      id: stageId,
+    
+    stages.push({
+      id: `stage-${stageNumber}`,
       name: `Robin Round ${stageNumber}`,
       stageNumber,
       groups,
-      matches: stageMatches,
-    };
-    stages.push(stage);
-
-    // Prepare teams for next stage based on advancement config
-    if (stageConfig && i < roundRobinRounds.length - 1) {
+      matches,
+    });
+    
+    // Determine teams for next stage based on advancement config
+    if (i < roundRobinRounds.length - 1) {
       const nextStageTeams: Team[] = [];
-
-      for (const group of groups) {
-        // Add winners if they go to next stage
-        if (stageConfig.winnerDestination.type === 'NextStage' && group.teams.length > 0) {
-          nextStageTeams.push(group.teams[0]);
-        }
-
-        // Add runner-ups if they go to next stage (exclude eliminated)
-        if (stageConfig.runnerUpDestination.type === 'NextStage' && group.teams.length >= 2) {
-          nextStageTeams.push(group.teams[1]);
+      const stageConfig = stageAdvancementConfigs.find(c => c.stageNumber === stageNumber);
+      
+      if (stageConfig) {
+        const nextStageNumber = roundRobinRounds[i + 1].roundNumber;
+        
+        for (const group of groups) {
+          // Add winners if they advance to next stage
+          if (stageConfig.winnerDestination.type === 'NextStage' &&
+              stageConfig.winnerDestination.stageIndex === nextStageNumber) {
+            if (group.teams.length > 0) {
+              nextStageTeams.push(group.teams[0]);
+            }
+          }
+          
+          // Add runner-ups if they advance to next stage (exclude eliminated)
+          if (stageConfig.runnerUpDestination.type === 'NextStage' &&
+              stageConfig.runnerUpDestination.stageIndex === nextStageNumber) {
+            if (group.teams.length >= 2) {
+              nextStageTeams.push(group.teams[1]);
+            }
+          }
         }
       }
-
+      
       currentTeams = nextStageTeams;
     }
   }
-
-  // Generate knockout matches
-  const knockoutMatches = generateKnockoutMatches(
-    stages,
-    knockoutStages,
-    stageAdvancementConfigs,
-    roundRobinRounds
-  );
-
-  return { stages, knockoutMatches };
+  
+  return stages;
 }

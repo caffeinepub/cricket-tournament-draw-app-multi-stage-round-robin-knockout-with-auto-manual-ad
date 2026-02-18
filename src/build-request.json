@@ -1,70 +1,37 @@
 {
   "kind": "build_request",
-  "title": "Implement 12-group Round 1 to Round 2 to Pre-Quarter advancement rule and stage-specific group lettering",
+  "title": "Fix knockout bracket match counts after Pre-Quarterfinal",
   "projectName": "Tournament Scheduler",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a tournament setup preset for the requested group/advancement structure: Round-robin 1 has 12 groups (A–L) where group winners (A1–L1) advance to Knockout → Pre-Quarterfinals, and group runners-up (A2–L2) advance to Round-robin 2; Round-robin 2 has 4 groups (M–P) where group winners (M1–P1) advance to Knockout → Pre-Quarterfinals, and Round-robin 2 runners-up are eliminated.",
+      "text": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "We have 12 group A to L in robin round 1... winner will go to prequarter means A1 to L1... A2 to L2 into robin round 2... Now the winner would be M1,N1,O1,P1 they will go to prequarter"
+          "Pre q means 8 match\nQ means 4 match\nSemi means 2 match\nFinal means 1 match\nIts standard"
         ]
       },
       "acceptanceCriteria": [
-        "In Tournament Setup, the user can apply a preset that configures: (1) number of robin rounds = 2, (2) Round 1 group count = 12, (3) Round 2 group count = 4, (4) knockout stages enabled includes Pre-Quarterfinals, (5) stage advancement config for Round 1: winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2), (6) stage advancement config for Round 2: winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated.",
-        "After applying the preset and generating, the qualified team count shown in setup equals 16 (12 Round 1 winners + 4 Round 2 winners) and passes existing compatibility validation for Pre-Quarterfinals."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Update round-robin group naming so that group letters continue across round-robin stages (instead of restarting at A each stage), producing Round 1 group names A–L for 12 groups and Round 2 group names M–P for 4 groups in this configuration.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "We have 12 group A to L in robin round 1... Now the winner would be M1,N1,O1,P1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When generating multiple round-robin stages, group names are unique and sequential across stages (e.g., if Stage 1 has 12 groups named A–L, then Stage 2 group names start at M).",
-        "Stage group names shown in the schedule views and group tables match the sequential naming (A–L then M–P for the preset configuration)."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Fix user-facing advancement destination labels so that a NextStage destination displays the actual robin round number it points to (e.g., “Robin Round 2”), and does not display an incorrect “Round X” value derived by adding 1 to the stage number.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "A2 to L2 into robin round 2"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Wherever advancement destinations are displayed (e.g., the setup page’s advancement summary and the stage flow preview), a winner/runner-up destination of {type:'NextStage', stageIndex: 2} is displayed as 'Robin Round 2' (or equivalent clearly correct text).",
-        "Knockout entry destinations continue to display as Pre-Quarterfinals/Quarterfinals/Semifinals as they do now."
+        "When knockoutStages.preQuarterFinal, quarterFinal, semiFinal, and final are enabled and 16 real teams enter Pre-Quarterfinal, generateKnockoutMatches returns 8 Pre-Quarterfinal matches, 4 Quarterfinal matches, 2 Semifinal matches, and 1 Final match.",
+        "The teams carried forward between rounds represent winners only (i.e., after a round with N matches, the next round starts with N placeholder teams), so the next round match count is always half of the prior round’s match count.",
+        "KnockoutPage displays the corrected per-round match badges (e.g., Quarterfinal shows “4 matches”, Semifinal shows “2 matches”, Final shows “1 match”) for the same configuration.",
+        "The fix does not change qualification logic (which teams qualify) or round naming (Pre-Quarterfinal, Quarterfinal, Semifinal, Final) beyond correcting match counts."
       ]
     }
   ],
   "constraints": [
-    "Use English for all user-facing text.",
-    "Do not edit files under frontend/src/components/ui or any paths listed in frontend.immutablePaths.",
-    "Keep backend as a single Motoko actor (no new backend services)."
+    "Do not modify files under frontend/src/components/ui (read-only).",
+    "Keep all changes within the existing React + TypeScript frontend; no new backend dependencies or external services."
   ],
   "nonGoals": [
-    "Do not implement real match result entry or standings calculation; current winner/runner-up selection remains based on existing team ordering logic.",
-    "Do not add third-party authentication providers beyond Internet Identity.",
-    "Do not change the knockout bracket sizing rules beyond what is required to support the specified pre-quarter qualification flow."
+    "Changing how teams qualify for knockout (advancement configuration rules).",
+    "Adding new knockout rounds or changing existing round names.",
+    "Implementing match result entry and propagation of actual winners through the bracket (beyond using TBD placeholders)."
   ],
   "imageRequirements": {
     "required": [],

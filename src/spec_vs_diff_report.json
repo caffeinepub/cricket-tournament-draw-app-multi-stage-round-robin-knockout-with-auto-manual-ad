@@ -1,53 +1,14 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T18:03:19.813Z",
-  "summary": "Diff implements sequential group lettering across round-robin stages, updates NextStage destination labels to show the correct robin round number, and appears to add UI to preview stage flow. A specific 12-group→4-group→Pre-Quarterfinals preset is claimed in summaries but is not directly evidenced in the truncated TournamentSetupPage diff. Several unrelated UI/navigation features (e.g., full schedule view) appear added beyond the request.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Add a tournament setup preset that configures 2 robin rounds (12 groups then 4 groups), enables Pre-Quarterfinals, and sets advancement rules: Round 1 winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2); Round 2 winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated; and show qualified team count = 16 passing validation.",
-      "reason": "The diff summary text asserts a preset exists, but the provided TournamentSetupPage.tsx content is truncated before any preset button/config application logic is shown, so the exact preset values and the qualified-count/compatibility behavior cannot be verified from the included code excerpt.",
-      "evidence": [
-        "frontend/src/pages/TournamentSetupPage.tsx (truncated)",
-        "frontend-file-summaries.txt (claims preset exists but not code-level evidence)"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "Introduce a new 'fullSchedule' view/page and navigation changes across app pages (setup → schedule → full schedule → knockout).",
-      "reason": "BuildRequest does not ask for a new full schedule view or routing changes; it focuses on a preset, sequential group lettering, and correct advancement destination labels.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions 'fullSchedule' view, StageSchedulePage 'View Full Schedule', KnockoutPage back to full schedule)",
-        "frontend/src/features/tournament/useTournamentStore.ts (truncated; includes setCurrentView type with 'fullSchedule')"
-      ]
-    },
-    {
-      "description": "Add/modify shared layout footer with 'caffeine.ai attribution'.",
-      "reason": "No requirement mentions adding attribution or changing the app layout/footer.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/AppLayout.tsx summary mentions caffeine.ai attribution)"
-      ]
-    },
-    {
-      "description": "Add match date/time editing component behavior (inline validation and persistence).",
-      "reason": "Non-goals explicitly say not to implement real match result entry/standings; while date/time editing isn’t results, it is also not requested by any REQ and appears as additional scope.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/MatchDateTimeEditor.tsx summary)",
-        "frontend/src/features/tournament/useTournamentStore.ts (shows updateMatchDateTime implementation)"
-      ]
-    }
-  ],
-  "confidence": 0.62,
+  "generatedAt": "2026-02-17T17:32:55.984Z",
+  "summary": "The diff updates knockout match generation to carry forward only winner placeholders between rounds, which halves the team pool each round and produces standard single-elimination match counts (8→4→2→1) after a Pre-Quarterfinal round.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.74,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
-    "frontend/src/features/tournament/generation.ts",
-    "frontend/src/features/tournament/groupNaming.ts",
-    "frontend/src/features/tournament/useTournamentStore.ts",
-    "frontend/src/features/tournament/validation.ts",
-    "frontend/src/pages/TournamentSetupPage.tsx",
+    "frontend/src/features/tournament/knockoutGenerator.ts",
     "project_state.json"
   ]
 }

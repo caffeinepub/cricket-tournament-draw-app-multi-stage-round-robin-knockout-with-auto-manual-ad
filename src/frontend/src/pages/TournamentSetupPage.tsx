@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Trophy, AlertCircle, CheckCircle2, Info, Plus, Minus, Settings, Sparkles } from 'lucide-react';
+import { Trophy, AlertCircle, CheckCircle2, Info, Plus, Minus, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import AppLayout from '../components/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,6 @@ export default function TournamentSetupPage() {
     roundRobinRounds,
     setRoundRobinRounds,
     stageAdvancementConfigs,
-    setStageAdvancementConfig,
     knockoutStages,
     setKnockoutStages,
     generateTournament,
@@ -113,54 +112,6 @@ export default function TournamentSetupPage() {
   const handleOpenAdvancementDialog = (stageNumber: number) => {
     setSelectedStageNumber(stageNumber);
     setShowAdvancementDialog(true);
-  };
-
-  const handleApplyPreset = () => {
-    // Apply the 12-group → 4-group → Pre-Quarterfinals preset
-    const presetRoundConfigs: RoundRobinRoundConfig[] = [
-      { roundNumber: 1, groupCount: 12 },
-      { roundNumber: 2, groupCount: 4 },
-    ];
-    
-    const presetGroupCountInputs: Record<number, string> = {
-      1: '12',
-      2: '4',
-    };
-    
-    const presetAdvancementConfigs: StageAdvancementConfig[] = [
-      {
-        stageNumber: 1,
-        winnerDestination: { type: 'KnockoutEntry', entryPoint: 'PreQuarterfinals' },
-        runnerUpDestination: { type: 'NextStage', stageIndex: 2 },
-      },
-      {
-        stageNumber: 2,
-        winnerDestination: { type: 'KnockoutEntry', entryPoint: 'PreQuarterfinals' },
-        runnerUpDestination: { type: 'Eliminated' },
-      },
-    ];
-    
-    const presetKnockoutStages = {
-      preQuarterFinal: true,
-      quarterFinal: true,
-      semiFinal: true,
-      final: true,
-    };
-    
-    // Apply all preset configurations
-    setRoundConfigs(presetRoundConfigs);
-    setGroupCountInputs(presetGroupCountInputs);
-    setRoundRobinRounds(presetRoundConfigs);
-    
-    // Apply advancement configs
-    presetAdvancementConfigs.forEach(config => {
-      setStageAdvancementConfig(config);
-    });
-    
-    // Apply knockout stages
-    setKnockoutStages(presetKnockoutStages);
-    
-    toast.success('Preset applied: 12 groups (A-L) → 4 groups (M-P) → Pre-Quarterfinals');
   };
 
   const handleGenerate = () => {
@@ -267,24 +218,6 @@ export default function TournamentSetupPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Configuration Panel */}
           <div className="space-y-6">
-            {/* Preset Button */}
-            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:border-emerald-800 dark:from-emerald-950/30 dark:to-teal-950/30">
-              <CardContent className="pt-6">
-                <Button 
-                  onClick={handleApplyPreset} 
-                  className="w-full"
-                  variant="default"
-                  size="lg"
-                >
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Apply Preset: 12 Groups (A-L) → 4 Groups (M-P) → Pre-Quarterfinals
-                </Button>
-                <p className="mt-3 text-xs text-center text-muted-foreground">
-                  Quick setup: Round 1 winners (A1-L1) → Pre-Quarterfinals, runners-up (A2-L2) → Round 2 (M-P), Round 2 winners (M1-P1) → Pre-Quarterfinals
-                </p>
-              </CardContent>
-            </Card>
-
             {/* 1. Number of Teams */}
             <Card>
               <CardHeader>
@@ -524,25 +457,22 @@ export default function TournamentSetupPage() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total Teams:</span>
-                  <Badge variant="secondary">{numberOfTeams}</Badge>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Robin Rounds:</span>
-                  <Badge variant="secondary">{roundConfigs.length}</Badge>
+                  <span className="font-medium">{numberOfTeams}</span>
                 </div>
                 <Separator />
-                {roundConfigs.map((config) => (
-                  <div key={config.roundNumber} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Round {config.roundNumber} Groups:</span>
-                    <Badge variant="outline">{config.groupCount}</Badge>
-                  </div>
-                ))}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Robin Rounds:</span>
+                  <span className="font-medium">{roundConfigs.length}</span>
+                </div>
                 <Separator />
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Qualified for Knockout:</span>
-                  <Badge variant={isCompatible ? "default" : "destructive"}>
-                    {qualifiedTeamCount}
-                  </Badge>
+                  <span className="font-medium">{qualifiedTeamCount} teams</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Required for Knockout:</span>
+                  <span className="font-medium">{requiredTeamCount} teams</span>
                 </div>
               </CardContent>
             </Card>
@@ -551,7 +481,7 @@ export default function TournamentSetupPage() {
       </div>
 
       {/* Advancement Config Dialog */}
-      {selectedStageNumber !== null && (
+      {showAdvancementDialog && selectedStageNumber !== null && (
         <AdvancementConfigDialog
           open={showAdvancementDialog}
           onOpenChange={setShowAdvancementDialog}
@@ -566,7 +496,7 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Regenerate Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will regenerate the tournament with the current configuration. All existing matches and team assignments will be replaced.
+              This will overwrite your existing tournament data and any team name edits you've made. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -584,13 +514,13 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will clear all tournament data including configuration, teams, matches, and results. This action cannot be undone.
+              This will clear all tournament data and return to the setup screen. All your configurations and edits will be lost. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Reset All Data
+              Reset
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

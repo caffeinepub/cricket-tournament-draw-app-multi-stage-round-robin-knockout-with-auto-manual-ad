@@ -1,9 +1,26 @@
-import { RoundRobinRoundConfig, StageAdvancementConfig, KnockoutStage, AdvancementDestination } from './types';
+import { RoundRobinRoundConfig, KnockoutStage, StageAdvancementConfig, AdvancementDestination } from './types';
 import { getQualifiedTeamCount } from './qualification';
 
-export function validateNumberOfTeams(count: number): string | null {
-  if (isNaN(count) || count < 4) {
-    return 'Please enter at least 4 teams';
+export function validatePositiveInteger(value: number, fieldName: string): string | null {
+  if (!Number.isInteger(value) || value <= 0) {
+    return `${fieldName} must be a positive integer`;
+  }
+  return null;
+}
+
+export function validateNumberOfTeams(numberOfTeams: number): string | null {
+  if (!Number.isInteger(numberOfTeams) || numberOfTeams < 4) {
+    return 'Number of teams must be at least 4';
+  }
+  return null;
+}
+
+export function validateGroupCount(groupCount: number, numberOfTeams: number): string | null {
+  if (!Number.isInteger(groupCount) || groupCount <= 0) {
+    return 'Number of groups must be a positive integer';
+  }
+  if (groupCount > numberOfTeams) {
+    return 'Number of groups cannot exceed number of teams';
   }
   return null;
 }
@@ -13,36 +30,34 @@ export function validateRoundConfig(
   config: RoundRobinRoundConfig,
   prevRoundTeamCount?: number
 ): string | null {
-  if (config.groupCount < 1) {
-    return `Round ${config.roundNumber}: At least 1 group is required`;
+  const teamCount = prevRoundTeamCount || totalTeams;
+  
+  if (config.groupCount <= 0) {
+    return `Round ${config.roundNumber}: Number of groups must be positive`;
   }
-
-  const teamsForThisRound = prevRoundTeamCount ?? totalTeams;
-  if (config.groupCount > teamsForThisRound) {
-    return `Round ${config.roundNumber}: Cannot have more groups (${config.groupCount}) than teams (${teamsForThisRound})`;
+  
+  if (config.groupCount > teamCount) {
+    return `Round ${config.roundNumber}: Cannot have more groups (${config.groupCount}) than teams (${teamCount})`;
   }
-
+  
+  const teamsPerGroup = Math.floor(teamCount / config.groupCount);
+  if (teamsPerGroup < 2) {
+    return `Round ${config.roundNumber}: Each group must have at least 2 teams`;
+  }
+  
   return null;
 }
 
 export function validateAdvancementRuleCompatibility(
-  totalTeams: number,
-  roundConfigs: RoundRobinRoundConfig[],
+  numberOfTeams: number,
+  roundRobinRounds: RoundRobinRoundConfig[],
   stageAdvancementConfigs: StageAdvancementConfig[],
   knockoutStages: KnockoutStage
 ): string | null {
-  // Check if all stages have advancement configs
-  for (const config of roundConfigs) {
-    const hasConfig = stageAdvancementConfigs.some(c => c.stageNumber === config.roundNumber);
-    if (!hasConfig) {
-      return `Robin Round ${config.roundNumber} is missing advancement configuration`;
-    }
-  }
-
   // Calculate qualified team count
-  const qualifiedCount = getQualifiedTeamCount(stageAdvancementConfigs, roundConfigs, knockoutStages);
-
-  // Determine required team count based on first enabled knockout stage
+  const qualifiedCount = getQualifiedTeamCount(stageAdvancementConfigs, roundRobinRounds, knockoutStages);
+  
+  // Determine required team count for first enabled knockout stage
   let requiredCount = 0;
   if (knockoutStages.preQuarterFinal) {
     requiredCount = 16;
@@ -53,27 +68,41 @@ export function validateAdvancementRuleCompatibility(
   } else if (knockoutStages.final) {
     requiredCount = 2;
   }
-
-  // If knockout stages are enabled, validate team count
-  if (requiredCount > 0 && qualifiedCount !== requiredCount) {
-    return `Qualified teams (${qualifiedCount}) must match the first enabled knockout stage requirement (${requiredCount} teams)`;
+  
+  if (requiredCount === 0) {
+    return null; // No knockout stages enabled
   }
-
+  
+  if (qualifiedCount !== requiredCount) {
+    return `Advancement configuration produces ${qualifiedCount} qualified teams, but the first enabled knockout stage requires exactly ${requiredCount} teams. Please adjust your stage advancement rules.`;
+  }
+  
   return null;
 }
 
+export function validateDateFormat(date: string): boolean {
+  // Basic YYYY-MM-DD format validation
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  return dateRegex.test(date);
+}
+
+export function validateTimeFormat(time: string): boolean {
+  // Basic HH:MM format validation
+  const timeRegex = /^\d{2}:\d{2}$/;
+  return timeRegex.test(time);
+}
+
 /**
- * Format an advancement destination for display
+ * Format a destination for display
  */
 export function formatDestination(destination: AdvancementDestination): string {
-  switch (destination.type) {
-    case 'NextStage':
-      return `Robin Round ${destination.stageIndex}`;
-    case 'KnockoutEntry':
-      return destination.entryPoint;
-    case 'Eliminated':
-      return 'Eliminated';
+  if (destination.type === 'Eliminated') {
+    return 'Eliminated';
   }
+  if (destination.type === 'NextStage') {
+    return `Round ${destination.stageIndex + 1}`;
+  }
+  return destination.entryPoint.replace('finals', '-Finals');
 }
 
 /**
@@ -84,10 +113,13 @@ export function getStageAdvancementLabel(
   stageAdvancementConfigs: StageAdvancementConfig[]
 ): string {
   const config = stageAdvancementConfigs.find(c => c.stageNumber === stageNumber);
-  if (!config) return 'Not configured';
-
+  
+  if (!config) {
+    return 'Not configured';
+  }
+  
   const winnerDest = formatDestination(config.winnerDestination);
   const runnerUpDest = formatDestination(config.runnerUpDestination);
-
-  return `Winners → ${winnerDest}, Runners-up → ${runnerUpDest}`;
+  
+  return `Winners → ${winnerDest} • Runners-up → ${runnerUpDest}`;
 }

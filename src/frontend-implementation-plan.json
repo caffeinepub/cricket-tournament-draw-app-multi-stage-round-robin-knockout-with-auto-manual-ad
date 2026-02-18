@@ -1,65 +1,27 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "12-group Round 1 → Round 2 → Pre-Quarterfinals preset, sequential group lettering, and correct advancement labels",
+  "title": "Fix knockout bracket match counts after Pre-Quarterfinal",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a Tournament Setup preset that configures 2 round-robin stages (12 groups then 4 groups) with winners/runners-up advancing per the specified Round 1→Round 2→Pre-Quarterfinals rule.",
+      "summary": "Correct knockout bracket generation so each subsequent round halves the match count by carrying forward only winner placeholders (not full team slots), producing standard single-elimination counts and correct UI match badges.",
       "acceptanceCriteria": [
-        "In Tournament Setup, the user can apply a preset that configures: (1) number of robin rounds = 2, (2) Round 1 group count = 12, (3) Round 2 group count = 4, (4) knockout stages enabled includes Pre-Quarterfinals, (5) stage advancement config for Round 1: winners → KnockoutEntry(PreQuarterfinals), runners-up → NextStage(2), (6) stage advancement config for Round 2: winners → KnockoutEntry(PreQuarterfinals), runners-up → Eliminated.",
-        "After applying the preset and generating, the qualified team count shown in setup equals 16 (12 Round 1 winners + 4 Round 2 winners) and passes existing compatibility validation for Pre-Quarterfinals."
+        "When knockoutStages.preQuarterFinal, quarterFinal, semiFinal, and final are enabled and 16 real teams enter Pre-Quarterfinal, generateKnockoutMatches returns 8 Pre-Quarterfinal matches, 4 Quarterfinal matches, 2 Semifinal matches, and 1 Final match.",
+        "The teams carried forward between rounds represent winners only (i.e., after a round with N matches, the next round starts with N placeholder teams), so the next round match count is always half of the prior round’s match count.",
+        "KnockoutPage displays the corrected per-round match badges (e.g., Quarterfinal shows “4 matches”, Semifinal shows “2 matches”, Final shows “1 match”) for the same configuration.",
+        "The fix does not change qualification logic (which teams qualify) or round naming (Pre-Quarterfinal, Quarterfinal, Semifinal, Final) beyond correcting match counts."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/TournamentSetupPage.tsx",
+          "path": "frontend/src/features/tournament/knockoutGenerator.ts",
           "operation": "modify",
-          "description": "Add a preset control in Tournament Setup to apply the requested configuration: set robin rounds to 2, group counts to 12 (Round 1) and 4 (Round 2), enable Pre-Quarterfinals knockout stage, and set stageAdvancementConfigs to: Stage 1 winners→KnockoutEntry(PreQuarterfinals) + runners-up→NextStage(2); Stage 2 winners→KnockoutEntry(PreQuarterfinals) + runners-up→Eliminated. Ensure all user-facing text is English. Verify the component's usage instructions before implementing."
+          "description": "Fix round-to-round team carry-forward logic so that after generating a round with N matches, the next round starts with N placeholder 'winner' teams (not 2N), ensuring match counts halve each round (8→4→2→1) when all rounds are enabled. Update helper naming/comments as needed to reflect winner-placeholder semantics."
         },
         {
-          "path": "frontend/src/features/tournament/useTournamentStore.ts",
+          "path": "frontend/src/pages/KnockoutPage.tsx",
           "operation": "modify",
-          "description": "Ensure TournamentSetupPage can update all store fields required by the preset (including stageAdvancementConfigs and knockoutStages) in a single user action, without changing any backend behavior."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Make round-robin group letters sequential across stages (e.g., A–L then M–P) instead of restarting at A for each stage.",
-      "acceptanceCriteria": [
-        "When generating multiple round-robin stages, group names are unique and sequential across stages (e.g., if Stage 1 has 12 groups named A–L, then Stage 2 group names start at M).",
-        "Stage group names shown in the schedule views and group tables match the sequential naming (A–L then M–P for the preset configuration)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/features/tournament/groupNaming.ts",
-          "operation": "modify",
-          "description": "Extend group naming utilities to support generating names by a global group index (or with an offset), while keeping the existing exported function(s) working for current callers."
-        },
-        {
-          "path": "frontend/src/features/tournament/generation.ts",
-          "operation": "modify",
-          "description": "Update round-robin stage generation to compute a per-stage group-name offset (sum of prior stage group counts) and use it so later stages continue lettering from prior stages (e.g., Stage 2 starts at M after 12 groups A–L)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Fix advancement destination labels so NextStage shows the actual target robin round number (e.g., 'Robin Round 2') rather than an incorrect derived value.",
-      "acceptanceCriteria": [
-        "Wherever advancement destinations are displayed (e.g., the setup page’s advancement summary and the stage flow preview), a winner/runner-up destination of {type:'NextStage', stageIndex: 2} is displayed as 'Robin Round 2' (or equivalent clearly correct text).",
-        "Knockout entry destinations continue to display as Pre-Quarterfinals/Quarterfinals/Semifinals as they do now."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/features/tournament/validation.ts",
-          "operation": "modify",
-          "description": "Fix formatting for AdvancementDestination of type NextStage so it renders the actual target stage number (e.g., 'Robin Round 2' for stageIndex=2) and does not compute the display value by adding 1. Keep existing KnockoutEntry and Eliminated labeling behavior correct."
-        },
-        {
-          "path": "frontend/src/components/Stage2GroupAssignmentPanel.tsx",
-          "operation": "modify",
-          "description": "Verify the stage flow preview uses the corrected destination formatter and displays NextStage destinations with the correct robin round number. Verify the component's usage instructions before implementing."
+          "description": "Confirm knockout round grouping and match-count badges rely on the generated match list and remain correct after the generator fix; make any minimal adjustments required so displayed per-round match counts reflect the corrected bracket output (no changes to round names or qualification logic)."
         }
       ]
     }
