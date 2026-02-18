@@ -12,6 +12,10 @@ import type { Principal } from '@icp-sdk/core/principal';
 
 export type AdvancementType = { 'KnockoutEntry' : KnockoutEntryType } |
   { 'NextStage' : bigint };
+export interface DrawsView {
+  'stages' : Array<[bigint, StageView]>,
+  'groups' : Array<[bigint, string]>,
+}
 export type KnockoutEntryType = { 'PreQuarterfinals' : null } |
   { 'Semifinals' : null } |
   { 'Quarterfinals' : null };
@@ -20,18 +24,54 @@ export interface RoundRobinStageConfig {
   'advancementRuleWinner' : AdvancementType,
   'advancementRuleRunnerUp' : AdvancementType,
 }
-export interface Stage {
+export type StageType = { 'Knockout' : null } |
+  { 'RoundRobin' : RoundRobinStageConfig };
+export interface StageView {
   'id' : bigint,
   'name' : string,
   'stageType' : StageType,
 }
-export type StageType = { 'Knockout' : null } |
-  { 'RoundRobin' : RoundRobinStageConfig };
+export type Time = bigint;
+export interface TournamentView {
+  'name' : string,
+  'creationDate' : Time,
+  'draws' : DrawsView,
+}
+export interface UserProfile {
+  'id' : Principal,
+  'username' : string,
+  'joinDate' : Time,
+  'isPrivate' : boolean,
+}
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
 export interface _SERVICE {
-  'addGroup' : ActorMethod<[bigint, string], undefined>,
-  'addStage' : ActorMethod<[bigint, string, StageType], undefined>,
-  'getAllStages' : ActorMethod<[], Array<[bigint, Stage]>>,
-  'getStage' : ActorMethod<[bigint], [] | [Stage]>,
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addGroupToAllTournaments' : ActorMethod<[bigint, string], undefined>,
+  'addGroupToTournament' : ActorMethod<[bigint, bigint, string], boolean>,
+  'addStageToAllTournaments' : ActorMethod<
+    [bigint, string, StageType],
+    undefined
+  >,
+  'addStageToTournament' : ActorMethod<
+    [bigint, bigint, string, StageType],
+    boolean
+  >,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createTournament' : ActorMethod<[bigint, string], undefined>,
+  'deleteTournament' : ActorMethod<[bigint], boolean>,
+  'getAllTournaments' : ActorMethod<[], Array<[bigint, TournamentView]>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getTournament' : ActorMethod<[bigint], [] | [TournamentView]>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'initializeNewProfile' : ActorMethod<[boolean], undefined>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setProfilePrivacy' : ActorMethod<[boolean], boolean>,
+  'updateTournamentName' : ActorMethod<[bigint, string], boolean>,
+  'updateUsername' : ActorMethod<[string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

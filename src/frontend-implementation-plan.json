@@ -1,83 +1,63 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Originating group serial prefixes for Robin Round 2 and Pre-Quarter Finals",
+  "title": "Fix blank screen in tournament list display",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Show each Robin Round 2 team as \"<OriginGroup>-<OriginPosition> <TeamName>\" across Stage 2 group tables and match listings, computed from the earliest stage the team appears in, as a display-only change.",
+      "summary": "Restore working tournament list display in TournamentListDialog, ensuring tournaments load and render correctly when dialog opens",
       "acceptanceCriteria": [
-        "In Robin Round 2, where the UI previously showed a team as \"Team X\", it now shows \"<OriginGroup>-<OriginPosition> Team X\" (e.g., \"A-2 Team 2\").",
-        "The origin group serial number is computed based on where the team originally appears in the tournament stages (smallest stageNumber containing that team), not the team’s current Robin Round 2 group/position.",
-        "No tournament state shape changes are introduced (no changes to frontend/src/features/tournament/types.ts interfaces and no backend changes)."
+        "Tournament list displays all saved tournaments when TournamentListDialog opens",
+        "No blank screen appears when viewing the tournament list",
+        "Tournament data loads successfully from the backend"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
+          "path": "frontend/src/components/TournamentListDialog.tsx",
           "operation": "modify",
-          "description": "For Stage 2 (Robin Round 2) only, render team labels using the resolved origin group serial prefix in the format \"<OriginGroup>-<OriginPosition> <TeamName>\" while keeping editing behavior unchanged (editing still edits only the underlying team.name). Use the shared origin-resolution helper and gracefully fall back to the current display when origin cannot be resolved."
-        },
-        {
-          "path": "frontend/src/features/tournament/roundRobinDisplayCode.ts",
-          "operation": "modify",
-          "description": "Update round-robin match team label formatting so that when the match belongs to Stage 2 (stageNumber === 2), the display uses the origin group serial prefix \"<OriginGroup>-<OriginPosition> <TeamName>\" derived from the earliest stage containing that team; otherwise keep existing behavior. Use the shared origin-resolution helper and fall back to the prior formatting if origin cannot be resolved."
-        },
-        {
-          "path": "frontend/src/pages/FullSchedulePage.tsx",
-          "operation": "modify",
-          "description": "Ensure Robin Round 2 match listings shown on the Full Schedule page pick up the updated Stage 2-specific formatting (origin group serial prefix with hyphen) via the shared round-robin display formatter, without altering any tournament data or models."
+          "description": "Fix the tournament list rendering by ensuring the getAllTournaments query is properly enabled when the dialog is open, tournaments data is correctly mapped to the UI list, and loading/error states are handled appropriately. Verify that the tournament list container has proper visibility and that tournament items render with name, date, and action buttons visible."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Show qualified (non-placeholder) teams in Pre-Quarter Final knockout views as \"<OriginGroup>-<OriginPosition> <TeamName>\" while keeping placeholders (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") unchanged.",
+      "summary": "Fix state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
       "acceptanceCriteria": [
-        "On knockout views that include Pre-Quarter Finals (including any schedule/bracket listing), real teams display as \"<OriginGroup>-<OriginPosition> <TeamName>\".",
-        "Placeholder entries continue to display exactly as placeholders (e.g., \"PQ1\" remains \"PQ1\", \"TBD\" remains \"TBD\").",
-        "If the two sides of a pre-quarter-final match originate from different groups, each side displays its own correct originating group serial."
+        "Tournament list state updates correctly when data is fetched",
+        "Loading states are handled properly during fetch operations",
+        "Error states are displayed if fetch fails"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/KnockoutPage.tsx",
+          "path": "frontend/src/components/TournamentListDialog.tsx",
           "operation": "modify",
-          "description": "When rendering knockout matches, detect placeholder labels using the existing placeholder utilities and keep them unchanged; for real teams, prefix with the resolved origin group serial \"<OriginGroup>-<OriginPosition>\" (hyphenated) before the team name. Use the shared origin-resolution helper and fall back to the existing label if origin cannot be resolved."
+          "description": "Ensure the useGetAllTournaments hook is properly configured with the correct enabled condition (dialog open state), handle the loading state by displaying a loading spinner or skeleton, and show appropriate error messages when the fetch fails. Verify that the tournament array state updates correctly when new data arrives from the backend."
         },
         {
-          "path": "frontend/src/pages/FullSchedulePage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "In the knockout section of the Full Schedule page, keep placeholder rendering exactly as-is; for real teams, display the origin-prefixed label \"<OriginGroup>-<OriginPosition> <TeamName>\" using the shared origin-resolution helper, with graceful fallback when origin cannot be determined."
+          "description": "Review and fix the useGetAllTournaments query hook to ensure it correctly returns loading, error, and data states. Verify the queryFn properly calls actor.getAllTournaments() and handles the response array of [bigint, TournamentView] tuples correctly."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add a shared frontend helper to resolve a team’s originating group serial from existing in-memory stages and use it consistently in Robin Round 2 and Pre-Quarter Final displays.",
+      "summary": "Remove or fix clickable tournament names functionality that broke the display, ensuring it does not interfere with tournament list rendering",
       "acceptanceCriteria": [
-        "Origin group serial resolution works purely from existing tournament state (stages/groups/teams) and does not modify team names or store new fields.",
-        "If an origin cannot be determined (unexpected/missing data), the UI falls back gracefully to the existing team display without breaking rendering.",
-        "The format uses a hyphen between group letter and position (\"A-2\", not \"A2\")."
+        "Tournament names are visible in the list",
+        "Click handlers do not cause rendering failures",
+        "Tournament list remains functional whether names are clickable or not"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/originGroupSerial.ts",
-          "operation": "create",
-          "description": "Create a shared helper that scans the current in-memory tournament stages to find the earliest (smallest stageNumber) stage/group containing a given team id, returning a hyphenated origin serial string (e.g., \"A-2\") and/or a formatter that produces \"<OriginGroup>-<OriginPosition> <TeamName>\". Ensure it is display-only and provides a safe fallback when origin cannot be resolved."
+          "path": "frontend/src/components/TournamentListDialog.tsx",
+          "operation": "modify",
+          "description": "Review any click handlers attached to tournament name elements and ensure they do not prevent the list from rendering. If tournament names were made clickable in Draft 47, either remove the click handler or ensure it's properly wrapped to prevent event propagation issues. Verify that tournament name rendering works whether clickable or static."
         },
         {
-          "path": "frontend/src/features/tournament/roundRobinDisplayCode.ts",
+          "path": "frontend/src/components/UserTournamentCard.tsx",
           "operation": "modify",
-          "description": "Integrate the shared origin serial helper so Robin Round 2 match team labels can use the origin-based prefix while preserving existing formatting for other stages and providing graceful fallback behavior."
-        },
-        {
-          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
-          "operation": "modify",
-          "description": "Integrate the shared origin serial helper so Stage 2 team labels show the origin-based prefix without changing underlying team/group/stage models and with graceful fallback when origin cannot be resolved."
-        },
-        {
-          "path": "frontend/src/pages/KnockoutPage.tsx",
-          "operation": "modify",
-          "description": "Use the shared origin serial helper to format real (non-placeholder) team labels in Pre-Quarter Final knockout rendering, while preserving existing placeholder display logic and providing graceful fallback."
+          "description": "Verify that the UserTournamentCard component's load functionality is working correctly and not interfering with the TournamentListDialog. Ensure the loadTournament backend call and store update logic functions properly when a tournament is selected from the list."
         }
       ]
     }

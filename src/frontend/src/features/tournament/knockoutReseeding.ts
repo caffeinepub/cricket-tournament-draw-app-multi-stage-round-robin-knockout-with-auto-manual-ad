@@ -8,6 +8,13 @@ export interface ReseedingResult {
   warnings: string[];
 }
 
+interface TeamWithMetadata {
+  team: Team;
+  isWinner: boolean;
+  groupName: string;
+  stageNumber: number;
+}
+
 /**
  * Build a set of team pairs that have already played each other in the current tournament.
  * History is derived solely from the provided stages (current in-memory state).
@@ -36,19 +43,65 @@ function havePlayedBefore(team1Id: string, team2Id: string, history: Set<string>
 }
 
 /**
- * Calculate a score for a bracket arrangement (lower is better)
- * - First-round rematches: +1000 per violation (highest priority to avoid)
- * - Same-half rematches (can meet before final): +100 per violation
+ * Check if two teams are from the same group
  */
-function scoreBracketArrangement(teams: Team[], history: Set<string>): number {
+function areSameGroup(team1: Team, team2: Team, metadata: TeamWithMetadata[]): boolean {
+  const meta1 = metadata.find(m => m.team.id === team1.id);
+  const meta2 = metadata.find(m => m.team.id === team2.id);
+  
+  if (!meta1 || !meta2) return false;
+  
+  return meta1.groupName === meta2.groupName && meta1.stageNumber === meta2.stageNumber;
+}
+
+/**
+ * Check if pairing violates Winner-vs-Runner-up rule
+ */
+function violatesWinnerRunnerUpRule(team1: Team, team2: Team, metadata: TeamWithMetadata[]): boolean {
+  const meta1 = metadata.find(m => m.team.id === team1.id);
+  const meta2 = metadata.find(m => m.team.id === team2.id);
+  
+  if (!meta1 || !meta2) return false;
+  
+  // Both winners or both runner-ups is a violation
+  return meta1.isWinner === meta2.isWinner;
+}
+
+/**
+ * Calculate a score for a bracket arrangement (lower is better)
+ * Priority order:
+ * 1. Winner-vs-Runner-up violations: +10000 per violation (highest priority)
+ * 2. Same-group first-round matchups: +5000 per violation
+ * 3. First-round rematches: +1000 per violation
+ * 4. Same-half rematches (can meet before final): +100 per violation
+ */
+function scoreBracketArrangement(
+  teams: Team[], 
+  history: Set<string>,
+  metadata: TeamWithMetadata[]
+): number {
   let score = 0;
   const halfSize = teams.length / 2;
   
-  // Check first-round matchups (adjacent pairs) - highest penalty
+  // Check first-round matchups (adjacent pairs)
   for (let i = 0; i < teams.length; i += 2) {
     if (i + 1 < teams.length) {
-      if (havePlayedBefore(teams[i].id, teams[i + 1].id, history)) {
-        score += 1000; // Very heavy penalty for first-round rematch
+      const team1 = teams[i];
+      const team2 = teams[i + 1];
+      
+      // Highest priority: Winner-vs-Runner-up rule
+      if (violatesWinnerRunnerUpRule(team1, team2, metadata)) {
+        score += 10000;
+      }
+      
+      // Second priority: Same-group matchups
+      if (areSameGroup(team1, team2, metadata)) {
+        score += 5000;
+      }
+      
+      // Third priority: Rematches
+      if (havePlayedBefore(team1.id, team2.id, history)) {
+        score += 1000;
       }
     }
   }
@@ -154,20 +207,19 @@ function* generatePermutations<T>(arr: T[]): Generator<T[]> {
 }
 
 /**
- * Attempt to reseed teams to avoid rematches before the final.
- * Uses exhaustive search for small team counts, smart sampling for larger counts.
+ * Attempt to reseed teams to respect Winner-vs-Runner-up rule, avoid same-group matchups, and minimize rematches.
+ * Uses exhaustive search for small team counts, deterministic sampling for larger counts.
  * 
  * Strategy:
  * 1. For ≤8 teams: exhaustive search of all permutations
- * 2. For >8 teams: intelligent random sampling with early termination
- * 3. Prioritizes eliminating same-half conflicts (pre-final rematches)
- * 4. Then eliminates first-round rematches
- * 5. Returns best arrangement found with detailed warnings (English-only, no emoji)
+ * 2. For >8 teams: deterministic permutation evaluation (no randomness)
+ * 3. Priority: Winner-vs-Runner-up > Same-group avoidance > Rematch avoidance
+ * 4. Returns best arrangement found with detailed warnings (English-only, no emoji)
  */
 export function reseedKnockoutTeams(
   teams: Team[],
   stages: Stage[],
-  maxAttempts: number = 10000
+  metadata: TeamWithMetadata[] = []
 ): ReseedingResult {
   if (teams.length === 0) {
     return { teams: [], warnings: [] };
@@ -178,7 +230,7 @@ export function reseedKnockoutTeams(
   
   // Start with the original arrangement
   let bestTeams = [...teams];
-  let bestScore = scoreBracketArrangement(bestTeams, history);
+  let bestScore = scoreBracketArrangement(bestTeams, history, metadata);
   
   // If already perfect (score = 0), return immediately
   if (bestScore === 0) {
@@ -195,7 +247,7 @@ export function reseedKnockoutTeams(
       count++;
       if (count > maxPermutations) break;
       
-      const score = scoreBracketArrangement(perm, history);
+      const score = scoreBracketArrangement(perm, history, metadata);
       
       if (score < bestScore) {
         bestScore = score;
@@ -208,23 +260,23 @@ export function reseedKnockoutTeams(
       }
     }
   } else {
-    // For larger team counts, use intelligent random sampling
-    // Try more attempts for better coverage
-    const attempts = Math.min(maxAttempts, teams.length * 1000);
+    // For larger team counts, use deterministic evaluation of systematic permutations
+    // Try swapping pairs to improve the arrangement
+    const attempts = Math.min(teams.length * 100, 10000);
     
     for (let attempt = 0; attempt < attempts; attempt++) {
-      // Create a random permutation using Fisher-Yates shuffle
-      const shuffled = [...teams];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      // Create a deterministic permutation by rotating elements
+      const rotated = [...teams];
+      const offset = attempt % teams.length;
+      for (let i = 0; i < teams.length; i++) {
+        rotated[i] = teams[(i + offset) % teams.length];
       }
       
-      const score = scoreBracketArrangement(shuffled, history);
+      const score = scoreBracketArrangement(rotated, history, metadata);
       
       if (score < bestScore) {
         bestScore = score;
-        bestTeams = [...shuffled];
+        bestTeams = [...rotated];
         
         // If we found a perfect arrangement, stop immediately
         if (bestScore === 0) {

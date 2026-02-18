@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarDays, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react';
+import { CalendarDays, ArrowLeft, ArrowRight, AlertTriangle, Save } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { KNOCKOUT_ROUND_ORDER } from '../features/tournament/knockoutRounds';
 import { formatRoundRobinTeamDisplay } from '../features/tournament/roundRobinDisplayCode';
@@ -13,9 +13,14 @@ import { getPlaceholderDisplayLabel, isPlaceholderTeam } from '../features/tourn
 import { KnockoutWinnerSelector } from '../components/KnockoutWinnerSelector';
 import { formatTeamWithOriginSerial } from '../features/tournament/originGroupSerial';
 import { toast } from 'sonner';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import SaveTournamentDialog from '../components/SaveTournamentDialog';
 
 export default function FullSchedulePage() {
   const { stages, knockoutMatches, knockoutWarnings, setCurrentView, setKnockoutWinner } = useTournamentStore();
+  const { identity, login, loginStatus, isLoginError } = useInternetIdentity();
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const pendingSaveRef = useRef(false);
 
   // Group knockout matches by round using canonical ordering
   const knockoutMatchesByRound = useMemo(() => {
@@ -38,6 +43,27 @@ export default function FullSchedulePage() {
     return new Map(sortedEntries);
   }, [knockoutMatches]);
 
+  // Check if user is authenticated
+  const isAuthenticated = useMemo(() => {
+    return !!identity && !identity.getPrincipal().isAnonymous();
+  }, [identity]);
+
+  // Handle login completion
+  useEffect(() => {
+    if (pendingSaveRef.current && loginStatus === 'success' && isAuthenticated) {
+      pendingSaveRef.current = false;
+      setIsSaveDialogOpen(true);
+    }
+  }, [loginStatus, isAuthenticated]);
+
+  // Handle login error
+  useEffect(() => {
+    if (pendingSaveRef.current && isLoginError) {
+      pendingSaveRef.current = false;
+      toast.error('Login failed. Please try again.');
+    }
+  }, [isLoginError]);
+
   const handleBack = () => {
     setCurrentView('schedule');
   };
@@ -49,6 +75,17 @@ export default function FullSchedulePage() {
   const handleSelectWinner = (matchId: string, winnerId: string) => {
     setKnockoutWinner(matchId, winnerId);
     toast.success('Winner updated');
+  };
+
+  const handleSave = () => {
+    if (isAuthenticated) {
+      // User is already authenticated, open save dialog directly
+      setIsSaveDialogOpen(true);
+    } else {
+      // User is not authenticated, trigger login
+      pendingSaveRef.current = true;
+      login();
+    }
   };
 
   /**
@@ -183,6 +220,19 @@ export default function FullSchedulePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                {/* Seeding Rule Warnings */}
+                {knockoutWarnings.seedingRuleWarnings.length > 0 && (
+                  <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                    <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                      <div className="font-semibold mb-1">Seeding Constraints</div>
+                      {knockoutWarnings.seedingRuleWarnings.map((warning, idx) => (
+                        <div key={idx} className="mt-1">{warning}</div>
+                      ))}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Reseeding Warnings */}
                 {knockoutWarnings.reseedingWarnings.length > 0 && (
                   <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
@@ -251,7 +301,25 @@ export default function FullSchedulePage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Save Tournament Button */}
+        <div className="flex justify-center pb-4">
+          <Button 
+            onClick={handleSave} 
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            <Save className="mr-2 h-5 w-5" />
+            Save Tournament
+          </Button>
+        </div>
       </div>
+
+      {/* Save Tournament Dialog */}
+      <SaveTournamentDialog 
+        open={isSaveDialogOpen} 
+        onOpenChange={setIsSaveDialogOpen} 
+      />
     </AppLayout>
   );
 }

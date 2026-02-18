@@ -1,37 +1,14 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T13:05:03.199Z",
-  "summary": "REQ-3 is implemented via a new shared helper that scans stages by smallest stageNumber to resolve an origin serial and formats team labels with a hyphenated prefix. Knockout views (KnockoutPage/FullSchedulePage) were updated to prefix real teams while preserving placeholders. Robin Round 2 match team display was updated (via roundRobinDisplayCode) to use the origin serial for stageNumber===2, but the diff is truncated for the main RoundRobinGroupTable UI so it’s unclear whether *all* Robin Round 2 team occurrences (e.g., group tables) now consistently render the prefixed format.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "In Robin Round 2, any team displayed (including match listings) shows its originating group serial number in the format \"<OriginGroup>-<OriginPosition> <TeamName>\".",
-      "reason": "The diff shows Robin Round 2 match formatting updated in frontend/src/features/tournament/roundRobinDisplayCode.ts, but the Robin Round 2 group/team table component change is truncated and does not show actual rendering using the origin serial prefix. Therefore it cannot be confirmed that all Robin Round 2 UI locations (beyond match listings) were updated.",
-      "evidence": [
-        "frontend/src/features/tournament/roundRobinDisplayCode.ts",
-        "frontend/src/components/RoundRobinGroupTable.tsx (truncated)"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "Apply origin-group-serial prefix formatting broadly to knockout team displays (not scoped specifically/only to Pre-Quarter Finals).",
-      "reason": "REQ-2 requests updating Pre-Quarter Final screens/entries; the changes introduce a generic knockout team display formatter in both KnockoutPage and FullSchedulePage that appears to apply to any knockout round rendered there, not explicitly limited to the pre-quarter-final round.",
-      "evidence": [
-        "frontend/src/pages/KnockoutPage.tsx (truncated)",
-        "frontend/src/pages/FullSchedulePage.tsx (truncated)"
-      ]
-    }
-  ],
-  "confidence": 0.62,
+  "generatedAt": "2026-02-18T19:08:21.345Z",
+  "summary": "The diff shows modifications to TournamentListDialog.tsx that implement tournament loading, state management, and display functionality. The changes address REQ-1 (restore tournament list display), REQ-2 (fix state management), and REQ-3 (handle clickable tournament names). The implementation includes loading states, error handling, and tournament data fetching from backend. No missing requirements or hallucinated features detected.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.85,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/RoundRobinGroupTable.tsx",
-    "frontend/src/features/tournament/originGroupSerial.ts",
-    "frontend/src/features/tournament/roundRobinDisplayCode.ts",
-    "frontend/src/pages/FullSchedulePage.tsx",
-    "frontend/src/pages/KnockoutPage.tsx",
+    "frontend/src/components/TournamentListDialog.tsx",
     "project_state.json"
   ]
 }

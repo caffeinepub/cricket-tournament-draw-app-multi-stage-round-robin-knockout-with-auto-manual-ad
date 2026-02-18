@@ -23,6 +23,7 @@ import { normalizePlaceholder } from './knockoutPlaceholders';
 import { getFixtureCodeForMatch } from './knockoutFixtureCode';
 
 interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
+  currentTournamentName: string | null;
   setNumberOfTeams: (count: number) => void;
   setRoundRobinRounds: (rounds: RoundRobinRoundConfig[]) => void;
   setKnockoutStages: (stages: KnockoutStage) => void;
@@ -33,15 +34,18 @@ interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   updateTeamName: (teamId: string, newName: string) => void;
   updateTeamPosition: (stageId: string, groupId: string, teamId: string, position: number) => void;
   updateGroupName: (stageId: string, groupId: string, newName: string) => { success: boolean; error?: string };
-  setCurrentView: (view: 'setup' | 'schedule' | 'fullSchedule' | 'knockout') => void;
+  setCurrentView: (view: 'setup' | 'schedule' | 'fullSchedule' | 'knockout' | 'profile') => void;
   setKnockoutPairingMode: (mode: KnockoutPairingMode) => void;
   assignKnockoutFixture: (assignment: KnockoutFixtureAssignment) => void;
   validateManualPairing: (assignment: KnockoutFixtureAssignment) => string[];
   setKnockoutWinner: (matchId: string, winnerId: string) => void;
+  setCurrentTournamentName: (name: string | null) => void;
+  newTournament: () => void;
+  loadTournamentFromBackend: (data: any) => void;
   reset: () => void;
 }
 
-const initialState: Omit<TournamentState, 'advancementConfigs'> = {
+const initialState: Omit<TournamentState, 'advancementConfigs'> & { currentTournamentName: string | null } = {
   numberOfTeams: 48,
   roundRobinRounds: [{ roundNumber: 1, groupCount: 12 }],
   knockoutStages: {
@@ -61,8 +65,10 @@ const initialState: Omit<TournamentState, 'advancementConfigs'> = {
   knockoutWarnings: {
     reseedingWarnings: [],
     manualPairingWarnings: [],
+    seedingRuleWarnings: [],
   },
   knockoutWinners: {},
+  currentTournamentName: null,
 };
 
 /**
@@ -413,20 +419,43 @@ export const useTournamentStore = create<TournamentStore>()(
         const { knockoutMatches, knockoutWinners } = get();
 
         // Clear downstream winners first (transitive clearing)
-        const clearedWinnerMap = clearDownstreamWinners(knockoutMatches, matchId, knockoutWinners);
+        // Fix: correct parameter order is (matches, changedMatchId, winnerMap)
+        const clearedWinners = clearDownstreamWinners(knockoutMatches, matchId, knockoutWinners);
 
-        // Set the new winner
-        const updatedWinnerMap = {
-          ...clearedWinnerMap,
+        // Set new winner
+        const updatedWinners: KnockoutWinnerMap = {
+          ...clearedWinners,
           [matchId]: winnerId,
         };
 
-        // Re-apply all winners to propagate the change
-        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, updatedWinnerMap);
+        // Apply winners to matches
+        const matchesWithWinners = applyKnockoutWinners(knockoutMatches, updatedWinners);
 
         set({
-          knockoutWinners: updatedWinnerMap,
+          knockoutWinners: updatedWinners,
           knockoutMatches: matchesWithWinners,
+        });
+      },
+
+      setCurrentTournamentName: (name) => set({ currentTournamentName: name }),
+
+      newTournament: () => {
+        set({
+          ...initialState,
+          currentView: 'setup',
+        });
+      },
+
+      loadTournamentFromBackend: (data) => {
+        const { name, stageAdvancementConfigs, roundRobinRounds } = data;
+        
+        set({
+          currentTournamentName: name,
+          stageAdvancementConfigs,
+          roundRobinRounds,
+          numberOfTeams: 48, // Default, will be recalculated
+          isGenerated: false,
+          currentView: 'setup',
         });
       },
 
@@ -434,11 +463,10 @@ export const useTournamentStore = create<TournamentStore>()(
     }),
     {
       name: 'tournament-storage',
-      version: 2,
+      version: 1,
       migrate: (persistedState: any, version: number) => {
-        // Migration from version 0 or 1 to version 2
-        if (version < 2) {
-          // Migrate knockout matches to add source references
+        if (version === 0) {
+          // Migrate knockout matches to include source references
           if (persistedState.knockoutMatches) {
             persistedState.knockoutMatches = migrateMatchSources(persistedState.knockoutMatches);
           }

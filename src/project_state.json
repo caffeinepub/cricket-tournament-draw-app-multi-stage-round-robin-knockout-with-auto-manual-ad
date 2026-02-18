@@ -1,47 +1,42 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Tournament app update: in Robin Round 2 and Pre-Quarter Final screens, show qualifying teams with their originating group serial number alongside the team name (display-only).",
-  "architectural_notes": [
-    "Display-only formatting change: prepend originating group serial (e.g., A-2) to qualifying team labels in Robin Round 2 and Pre-Quarter Final; no data model changes."
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Blank screen issue in Draft 47 - frontend tournament list not displaying",
+    "Clickable tournament names feature broke the display logic",
+    "Frontend state management issue preventing tournaments from loading correctly"
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-robin-round-2-ui-so-that-any-team-displayed-in-robin-round-2-including-match-listings-shows-its-originating-group-serial-number-alongside-the-team-name-in-the-format-groupletter-position-teamname-example-a-2-team-2-using-the-group-serial-from-the-stage-the-team-originally-came-from-typically-robin-round-1-this-must-be-a-display-only-change-do-not-change-persisted-data-or-the-underlying-team-stage-models",
-      "title": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
+      "id": "feature-restore-the-working-tournament-list-display-from-draft-44-in-tournamentlistdialog-component-ensuring-tournaments-load-and-render-correctly-when-the-dialog-opens",
+      "title": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-pre-quarter-final-knockout-screens-so-that-when-a-qualified-non-placeholder-team-is-displayed-it-is-shown-as-origingroup-originposition-teamname-example-a-2-team-2-using-the-team-s-originating-group-serial-number-placeholder-labels-e-g-pq1-tbd-winner-of-must-continue-to-render-as-placeholders-and-must-not-receive-a-group-serial-prefix",
-      "title": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
+      "id": "feature-fix-the-state-management-issue-in-tournamentlistdialog-that-prevents-tournaments-from-loading-correctly-on-page-load",
+      "title": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-shared-frontend-helper-to-compute-a-team-s-originating-group-serial-number-by-scanning-the-existing-in-memory-tournament-stages-no-new-persisted-fields-and-use-it-consistently-for-the-robin-round-2-and-pre-quarter-final-displays",
-      "title": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
+      "id": "feature-remove-or-fix-the-clickable-tournament-names-functionality-that-broke-the-display-in-draft-47-ensuring-it-does-not-interfere-with-the-tournament-list-rendering",
+      "title": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "In Robin Round 2 and Pre-Quarter Final, display qualifying team labels as \"<GroupSerial>-<TeamName>\" (e.g., \"A-2 Team 2\") using the team’s originating group serial number; display-only change.",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Tournament Bracket",
+  "new_feature_requests": [],
+  "projectName": "Fix blank screen in tournament list display",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

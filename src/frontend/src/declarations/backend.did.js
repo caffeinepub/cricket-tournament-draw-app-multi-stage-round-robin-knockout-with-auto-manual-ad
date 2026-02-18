@@ -26,17 +26,69 @@ export const StageType = IDL.Variant({
   'Knockout' : IDL.Null,
   'RoundRobin' : RoundRobinStageConfig,
 });
-export const Stage = IDL.Record({
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
+export const Time = IDL.Int;
+export const StageView = IDL.Record({
   'id' : IDL.Nat,
   'name' : IDL.Text,
   'stageType' : StageType,
 });
+export const DrawsView = IDL.Record({
+  'stages' : IDL.Vec(IDL.Tuple(IDL.Nat, StageView)),
+  'groups' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Text)),
+});
+export const TournamentView = IDL.Record({
+  'name' : IDL.Text,
+  'creationDate' : Time,
+  'draws' : DrawsView,
+});
+export const UserProfile = IDL.Record({
+  'id' : IDL.Principal,
+  'username' : IDL.Text,
+  'joinDate' : Time,
+  'isPrivate' : IDL.Bool,
+});
 
 export const idlService = IDL.Service({
-  'addGroup' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-  'addStage' : IDL.Func([IDL.Nat, IDL.Text, StageType], [], []),
-  'getAllStages' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Nat, Stage))], []),
-  'getStage' : IDL.Func([IDL.Nat], [IDL.Opt(Stage)], []),
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addGroupToAllTournaments' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+  'addGroupToTournament' : IDL.Func(
+      [IDL.Nat, IDL.Nat, IDL.Text],
+      [IDL.Bool],
+      [],
+    ),
+  'addStageToAllTournaments' : IDL.Func([IDL.Nat, IDL.Text, StageType], [], []),
+  'addStageToTournament' : IDL.Func(
+      [IDL.Nat, IDL.Nat, IDL.Text, StageType],
+      [IDL.Bool],
+      [],
+    ),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createTournament' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+  'deleteTournament' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'getAllTournaments' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Nat, TournamentView))],
+      ['query'],
+    ),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getTournament' : IDL.Func([IDL.Nat], [IDL.Opt(TournamentView)], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
+  'initializeNewProfile' : IDL.Func([IDL.Bool], [], []),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setProfilePrivacy' : IDL.Func([IDL.Bool], [IDL.Bool], []),
+  'updateTournamentName' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
+  'updateUsername' : IDL.Func([IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -60,17 +112,73 @@ export const idlFactory = ({ IDL }) => {
     'Knockout' : IDL.Null,
     'RoundRobin' : RoundRobinStageConfig,
   });
-  const Stage = IDL.Record({
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const Time = IDL.Int;
+  const StageView = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
     'stageType' : StageType,
   });
+  const DrawsView = IDL.Record({
+    'stages' : IDL.Vec(IDL.Tuple(IDL.Nat, StageView)),
+    'groups' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Text)),
+  });
+  const TournamentView = IDL.Record({
+    'name' : IDL.Text,
+    'creationDate' : Time,
+    'draws' : DrawsView,
+  });
+  const UserProfile = IDL.Record({
+    'id' : IDL.Principal,
+    'username' : IDL.Text,
+    'joinDate' : Time,
+    'isPrivate' : IDL.Bool,
+  });
   
   return IDL.Service({
-    'addGroup' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-    'addStage' : IDL.Func([IDL.Nat, IDL.Text, StageType], [], []),
-    'getAllStages' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Nat, Stage))], []),
-    'getStage' : IDL.Func([IDL.Nat], [IDL.Opt(Stage)], []),
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addGroupToAllTournaments' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+    'addGroupToTournament' : IDL.Func(
+        [IDL.Nat, IDL.Nat, IDL.Text],
+        [IDL.Bool],
+        [],
+      ),
+    'addStageToAllTournaments' : IDL.Func(
+        [IDL.Nat, IDL.Text, StageType],
+        [],
+        [],
+      ),
+    'addStageToTournament' : IDL.Func(
+        [IDL.Nat, IDL.Nat, IDL.Text, StageType],
+        [IDL.Bool],
+        [],
+      ),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createTournament' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+    'deleteTournament' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'getAllTournaments' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Nat, TournamentView))],
+        ['query'],
+      ),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getTournament' : IDL.Func([IDL.Nat], [IDL.Opt(TournamentView)], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
+    'initializeNewProfile' : IDL.Func([IDL.Bool], [], []),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setProfilePrivacy' : IDL.Func([IDL.Bool], [IDL.Bool], []),
+    'updateTournamentName' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
+    'updateUsername' : IDL.Func([IDL.Text], [], []),
   });
 };
 

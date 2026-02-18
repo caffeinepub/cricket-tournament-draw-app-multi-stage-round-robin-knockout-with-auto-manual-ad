@@ -78,6 +78,7 @@ export interface KnockoutFixtureAssignment {
 export interface KnockoutWarnings {
   reseedingWarnings: string[];
   manualPairingWarnings: string[];
+  seedingRuleWarnings: string[];
 }
 
 // Knockout winner map: matchId -> winnerId
@@ -97,7 +98,7 @@ export interface TournamentState {
   stages: Stage[];
   knockoutMatches: Match[];
   advancementConfigs: Record<string, AdvancementConfig>;
-  currentView: 'setup' | 'schedule' | 'fullSchedule' | 'knockout';
+  currentView: 'setup' | 'schedule' | 'fullSchedule' | 'knockout' | 'profile';
   isGenerated: boolean;
   knockoutPairingMode: KnockoutPairingMode;
   knockoutFixtureAssignments: KnockoutFixtureAssignment[];

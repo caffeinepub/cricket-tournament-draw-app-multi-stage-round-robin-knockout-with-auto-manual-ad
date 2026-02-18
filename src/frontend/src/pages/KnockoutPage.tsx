@@ -195,6 +195,19 @@ export default function KnockoutPage() {
           </div>
         </div>
 
+        {/* Seeding Rule Warnings */}
+        {knockoutWarnings.seedingRuleWarnings.length > 0 && (
+          <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+              <div className="font-semibold mb-1">Seeding Constraints</div>
+              {knockoutWarnings.seedingRuleWarnings.map((warning, idx) => (
+                <div key={idx} className="mt-1">{warning}</div>
+              ))}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Reseeding Warnings */}
         {knockoutWarnings.reseedingWarnings.length > 0 && (
           <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
@@ -239,9 +252,13 @@ export default function KnockoutPage() {
                                 {fixtureCode}
                               </Badge>
                             )}
-                            <span className="font-medium">{team1Display}</span>
+                            <span className="font-medium">
+                              {team1Display}
+                            </span>
                             <span className="text-muted-foreground">vs</span>
-                            <span className="font-medium">{team2Display}</span>
+                            <span className="font-medium">
+                              {team2Display}
+                            </span>
                           </div>
                           {match.date && match.time && (
                             <div className="text-xs text-muted-foreground sm:text-sm">
@@ -249,7 +266,7 @@ export default function KnockoutPage() {
                             </div>
                           )}
                         </div>
-
+                        
                         <KnockoutWinnerSelector
                           match={match}
                           onSelectWinner={handleSelectWinner}
@@ -262,23 +279,25 @@ export default function KnockoutPage() {
             </Card>
           ))}
         </div>
-      </div>
 
-      {/* Reset Confirmation Dialog */}
-      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset Tournament?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will clear all tournament data and return to the setup page. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmReset}>Reset</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Reset Confirmation Dialog */}
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset Tournament?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will clear all tournament data and return to the setup page. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmReset}>
+                Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </AppLayout>
   );
 }

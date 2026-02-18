@@ -2,19 +2,18 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-robin-round-2-ui-so-that-any-team-displayed-in-robin-round-2-including-match-listings-shows-its-originating-group-serial-number-alongside-the-team-name-in-the-format-groupletter-position-teamname-example-a-2-team-2-using-the-group-serial-from-the-stage-the-team-originally-came-from-typically-robin-round-1-this-must-be-a-display-only-change-do-not-change-persisted-data-or-the-underlying-team-stage-models",
-      "featureTitle": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
+      "featureId": "feature-restore-the-working-tournament-list-display-from-draft-44-in-tournamentlistdialog-component-ensuring-tournaments-load-and-render-correctly-when-the-dialog-opens",
+      "featureTitle": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
       "files": [
-        "frontend/src/components/RoundRobinGroupTable.tsx",
-        "frontend/src/features/tournament/roundRobinDisplayCode.ts",
-        "frontend/src/pages/FullSchedulePage.tsx"
+        "frontend/src/components/TournamentListDialog.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
         "REQ-1"
@@ -22,18 +21,18 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-pre-quarter-final-knockout-screens-so-that-when-a-qualified-non-placeholder-team-is-displayed-it-is-shown-as-origingroup-originposition-teamname-example-a-2-team-2-using-the-team-s-originating-group-serial-number-placeholder-labels-e-g-pq1-tbd-winner-of-must-continue-to-render-as-placeholders-and-must-not-receive-a-group-serial-prefix",
-      "featureTitle": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
+      "featureId": "feature-fix-the-state-management-issue-in-tournamentlistdialog-that-prevents-tournaments-from-loading-correctly-on-page-load",
+      "featureTitle": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
       "files": [
-        "frontend/src/pages/FullSchedulePage.tsx",
-        "frontend/src/pages/KnockoutPage.tsx"
+        "frontend/src/components/TournamentListDialog.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
         "REQ-2"
@@ -41,20 +40,18 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-shared-frontend-helper-to-compute-a-team-s-originating-group-serial-number-by-scanning-the-existing-in-memory-tournament-stages-no-new-persisted-fields-and-use-it-consistently-for-the-robin-round-2-and-pre-quarter-final-displays",
-      "featureTitle": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
+      "featureId": "feature-remove-or-fix-the-clickable-tournament-names-functionality-that-broke-the-display-in-draft-47-ensuring-it-does-not-interfere-with-the-tournament-list-rendering",
+      "featureTitle": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
       "files": [
-        "frontend/src/components/RoundRobinGroupTable.tsx",
-        "frontend/src/features/tournament/originGroupSerial.ts",
-        "frontend/src/features/tournament/roundRobinDisplayCode.ts",
-        "frontend/src/pages/KnockoutPage.tsx"
+        "frontend/src/components/TournamentListDialog.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
       ],
       "testIds": [
         "REQ-3"

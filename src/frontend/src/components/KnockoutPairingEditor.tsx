@@ -93,7 +93,7 @@ export default function KnockoutPairingEditor() {
             <CardTitle>Knockout Pairing</CardTitle>
             <CardDescription>
               {knockoutPairingMode === 'auto' 
-                ? 'Automatic pairing with rematch avoidance' 
+                ? 'Automatic pairing with Winner-vs-Runner-up seeding and rematch avoidance' 
                 : 'Manually assign teams to first-round matches'}
             </CardDescription>
           </div>
@@ -127,14 +127,29 @@ export default function KnockoutPairingEditor() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Automatic Pairing Active</p>
                     <p className="text-sm text-muted-foreground">
-                      Teams are automatically arranged to minimize rematches from the group stage. 
-                      Teams that already played will be placed in opposite bracket halves when possible.
+                      Teams are automatically arranged with group winners facing runner-ups from different groups. 
+                      Same-group matchups are avoided when possible, and teams that already played are placed in opposite bracket halves.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Display reseeding warnings in auto mode (English-only, no emoji) */}
+              {/* Display seeding rule warnings in auto mode */}
+              {knockoutWarnings.seedingRuleWarnings.length > 0 && (
+                <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                    <div className="font-semibold mb-2">Seeding Constraints</div>
+                    <div className="space-y-1">
+                      {knockoutWarnings.seedingRuleWarnings.map((warning, idx) => (
+                        <div key={idx} className="text-xs leading-relaxed">{warning}</div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Display reseeding warnings in auto mode */}
               {knockoutWarnings.reseedingWarnings.length > 0 && (
                 <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
                   <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />

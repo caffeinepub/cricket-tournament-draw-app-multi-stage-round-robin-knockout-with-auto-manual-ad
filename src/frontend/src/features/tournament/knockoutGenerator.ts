@@ -8,6 +8,149 @@ interface KnockoutGenerationResult {
   warnings: KnockoutWarnings;
 }
 
+interface TeamWithMetadata {
+  team: Team;
+  isWinner: boolean;
+  groupName: string;
+  stageNumber: number;
+}
+
+/**
+ * Collect qualified teams with metadata (winner/runner-up status and group origin)
+ */
+function getQualifiedTeamsWithMetadata(
+  stages: Stage[],
+  stageAdvancementConfigs: StageAdvancementConfig[],
+  knockoutStages: KnockoutStage
+): TeamWithMetadata[] {
+  const teamsWithMetadata: TeamWithMetadata[] = [];
+  
+  // Determine the first enabled knockout entry point
+  const firstKnockoutEntry = getFirstEnabledKnockoutEntry(knockoutStages);
+  if (!firstKnockoutEntry) return teamsWithMetadata;
+  
+  // Collect teams from all stages that route to this knockout entry
+  for (const stage of stages) {
+    const stageConfig = stageAdvancementConfigs.find(c => c.stageNumber === stage.stageNumber);
+    if (!stageConfig) continue;
+    
+    // Check if winners go to knockout
+    if (stageConfig.winnerDestination.type === 'KnockoutEntry' &&
+        stageConfig.winnerDestination.entryPoint === firstKnockoutEntry) {
+      for (const group of stage.groups) {
+        if (group.teams.length > 0) {
+          teamsWithMetadata.push({
+            team: group.teams[0],
+            isWinner: true,
+            groupName: group.name,
+            stageNumber: stage.stageNumber,
+          });
+        }
+      }
+    }
+    
+    // Check if runner-ups go to knockout (exclude eliminated)
+    if (stageConfig.runnerUpDestination.type === 'KnockoutEntry' &&
+        stageConfig.runnerUpDestination.entryPoint === firstKnockoutEntry) {
+      for (const group of stage.groups) {
+        if (group.teams.length >= 2) {
+          teamsWithMetadata.push({
+            team: group.teams[1],
+            isWinner: false,
+            groupName: group.name,
+            stageNumber: stage.stageNumber,
+          });
+        }
+      }
+    }
+  }
+  
+  return teamsWithMetadata;
+}
+
+function getFirstEnabledKnockoutEntry(knockoutStages: KnockoutStage): string | null {
+  if (knockoutStages.preQuarterFinal) return 'PreQuarterfinals';
+  if (knockoutStages.quarterFinal) return 'Quarterfinals';
+  if (knockoutStages.semiFinal) return 'Semifinals';
+  return null;
+}
+
+/**
+ * Attempt to pair winners with runner-ups while avoiding same-group matchups
+ */
+function pairWinnersWithRunnerUps(
+  teamsWithMetadata: TeamWithMetadata[],
+  stages: Stage[]
+): { teams: Team[]; warnings: string[] } {
+  const warnings: string[] = [];
+  
+  // Separate winners and runner-ups
+  const winners = teamsWithMetadata.filter(t => t.isWinner);
+  const runnerUps = teamsWithMetadata.filter(t => !t.isWinner);
+  
+  // If no runner-ups available, fall back to original order
+  if (runnerUps.length === 0) {
+    warnings.push('No runner-ups available for Winner-vs-Runner-up pairing. Using all winners.');
+    return { teams: teamsWithMetadata.map(t => t.team), warnings };
+  }
+  
+  // If counts don't match, we can't do perfect Winner-vs-Runner-up pairing
+  if (winners.length !== runnerUps.length) {
+    warnings.push(`Winner count (${winners.length}) does not match runner-up count (${runnerUps.length}). Perfect Winner-vs-Runner-up pairing not possible.`);
+    return { teams: teamsWithMetadata.map(t => t.team), warnings };
+  }
+  
+  // Try to find a pairing that avoids same-group matchups
+  const pairedTeams: Team[] = [];
+  const usedRunnerUps = new Set<number>();
+  const sameGroupViolations: string[] = [];
+  
+  for (const winner of winners) {
+    let bestRunnerUpIndex = -1;
+    let foundNonSameGroup = false;
+    
+    // Try to find a runner-up from a different group
+    for (let i = 0; i < runnerUps.length; i++) {
+      if (usedRunnerUps.has(i)) continue;
+      
+      const runnerUp = runnerUps[i];
+      
+      // Check if they're from the same group
+      if (winner.groupName !== runnerUp.groupName || winner.stageNumber !== runnerUp.stageNumber) {
+        bestRunnerUpIndex = i;
+        foundNonSameGroup = true;
+        break;
+      }
+    }
+    
+    // If no non-same-group runner-up found, take the first available
+    if (!foundNonSameGroup) {
+      for (let i = 0; i < runnerUps.length; i++) {
+        if (usedRunnerUps.has(i)) continue;
+        bestRunnerUpIndex = i;
+        
+        const runnerUp = runnerUps[i];
+        if (winner.groupName === runnerUp.groupName && winner.stageNumber === runnerUp.stageNumber) {
+          sameGroupViolations.push(`${winner.team.name} (Winner, Group ${winner.groupName}) vs ${runnerUp.team.name} (Runner-up, Group ${runnerUp.groupName})`);
+        }
+        break;
+      }
+    }
+    
+    if (bestRunnerUpIndex >= 0) {
+      pairedTeams.push(winner.team);
+      pairedTeams.push(runnerUps[bestRunnerUpIndex].team);
+      usedRunnerUps.add(bestRunnerUpIndex);
+    }
+  }
+  
+  if (sameGroupViolations.length > 0) {
+    warnings.push(`Same-group matchups unavoidable: ${sameGroupViolations.join('; ')}. Configuration constraints prevent full separation.`);
+  }
+  
+  return { teams: pairedTeams, warnings };
+}
+
 /**
  * Generate knockout matches based on qualified teams and knockout configuration
  */
@@ -22,6 +165,7 @@ export function generateKnockoutMatches(
   const warnings: KnockoutWarnings = {
     reseedingWarnings: [],
     manualPairingWarnings: [],
+    seedingRuleWarnings: [],
   };
 
   // Get qualified teams
@@ -55,8 +199,16 @@ export function generateKnockoutMatches(
   let orderedTeams: Team[];
 
   if (pairingMode === 'auto') {
-    // Use reseeding algorithm
-    const reseedResult = reseedKnockoutTeams(qualifiedTeams, stages);
+    // Get teams with metadata
+    const teamsWithMetadata = getQualifiedTeamsWithMetadata(stages, stageAdvancementConfigs, knockoutStages);
+    
+    // Apply Winner-vs-Runner-up pairing with same-group avoidance
+    const pairingResult = pairWinnersWithRunnerUps(teamsWithMetadata, stages);
+    orderedTeams = pairingResult.teams;
+    warnings.seedingRuleWarnings = pairingResult.warnings;
+    
+    // Apply rematch avoidance reseeding on top of the Winner-vs-Runner-up pairing
+    const reseedResult = reseedKnockoutTeams(orderedTeams, stages, teamsWithMetadata);
     orderedTeams = reseedResult.teams;
     warnings.reseedingWarnings = reseedResult.warnings;
   } else {

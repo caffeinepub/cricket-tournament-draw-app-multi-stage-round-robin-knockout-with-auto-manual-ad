@@ -1,92 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Show originating group serial numbers for qualified teams in Robin Round 2 and Pre-Quarter Finals",
-  "projectName": "Tournament Bracket",
-  "priority": "normal",
+  "title": "Fix blank screen in tournament list display",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the Robin Round 2 UI so that any team displayed in Robin Round 2 (including match listings) shows its originating group serial number alongside the team name in the format \"<GroupLetter>-<Position> <TeamName>\" (example: \"A-2 Team 2\"), using the group serial from the stage the team originally came from (typically Robin Round 1). This must be a display-only change (do not change persisted data or the underlying Team/Stage models).",
+      "text": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-5"
         ],
         "quotes": [
-          "Display formating only in robin round 2 and pre quarter final",
-          "yes like in a group team 2 as per now but i want A-2        2- yes    3- the group serial number from where the team are coming",
-          "build"
+          "You are wasting my credit..again blank screen"
         ]
       },
       "acceptanceCriteria": [
-        "In Robin Round 2, where the UI previously showed a team as \"Team X\", it now shows \"<OriginGroup>-<OriginPosition> Team X\" (e.g., \"A-2 Team 2\").",
-        "The origin group serial number is computed based on where the team originally appears in the tournament stages (smallest stageNumber containing that team), not the team’s current Robin Round 2 group/position.",
-        "No tournament state shape changes are introduced (no changes to frontend/src/features/tournament/types.ts interfaces and no backend changes)."
+        "Tournament list displays all saved tournaments when TournamentListDialog opens",
+        "No blank screen appears when viewing the tournament list",
+        "Tournament data loads successfully from the backend"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the Pre-Quarter Final (knockout) screens so that when a qualified (non-placeholder) team is displayed, it is shown as \"<OriginGroup>-<OriginPosition> <TeamName>\" (example: \"A-2 Team 2\"), using the team’s originating group serial number. Placeholder labels (e.g., \"PQ1\", \"TBD\", \"Winner of ...\") must continue to render as placeholders and must not receive a group-serial prefix.",
+      "text": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-5"
         ],
         "quotes": [
-          "Display formating only in robin round 2 and pre quarter final",
-          "the group serial number from where the team are coming",
-          "build"
+          "Frontend is trying to fetch tournaments on load but may not be handling the response correctly",
+          "State management for loading/displaying tournaments may have an issue"
         ]
       },
       "acceptanceCriteria": [
-        "On knockout views that include Pre-Quarter Finals (including any schedule/bracket listing), real teams display as \"<OriginGroup>-<OriginPosition> <TeamName>\".",
-        "Placeholder entries continue to display exactly as placeholders (e.g., \"PQ1\" remains \"PQ1\", \"TBD\" remains \"TBD\").",
-        "If the two sides of a pre-quarter-final match originate from different groups, each side displays its own correct originating group serial."
+        "Tournament list state updates correctly when data is fetched",
+        "Loading states are handled properly during fetch operations",
+        "Error states are displayed if fetch fails"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a shared frontend helper to compute a team’s originating group serial number by scanning the existing in-memory tournament stages (no new persisted fields) and use it consistently for the Robin Round 2 and Pre-Quarter Final displays.",
+      "text": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-5"
         ],
         "quotes": [
-          "Yes already there",
-          "Display formating only",
-          "the group serial number from where the team are coming"
+          "The clickable tournament names I just added might have broken the display logic"
         ]
       },
       "acceptanceCriteria": [
-        "Origin group serial resolution works purely from existing tournament state (stages/groups/teams) and does not modify team names or store new fields.",
-        "If an origin cannot be determined (unexpected/missing data), the UI falls back gracefully to the existing team display without breaking rendering.",
-        "The format uses a hyphen between group letter and position (\"A-2\", not \"A2\")."
+        "Tournament names are visible in the list",
+        "Click handlers do not cause rendering failures",
+        "Tournament list remains functional whether names are clickable or not"
       ]
     }
   ],
   "constraints": [
-    "Use English for any user-facing text.",
-    "Frontend files under frontend/src/components/ui and the immutable paths listed in SYSTEM_CONTEXT must not be edited.",
-    "Backend must remain single-actor; no backend changes are required for this display-only update."
+    "Do not modify the backend tournament data structure or API",
+    "Preserve existing tournament load functionality in UserTournamentCard component",
+    "Maintain compatibility with the tournament store and its state management"
   ],
   "nonGoals": [
-    "Do not change or migrate backend state.",
-    "Do not change the tournament data model (e.g., do not add fields to Team/Stage).",
-    "Do not alter how teams qualify or how brackets are generated; only update display formatting for Robin Round 2 and Pre-Quarter Finals."
+    "Adding new tournament management features",
+    "Redesigning the tournament list UI layout",
+    "Modifying backend tournament retrieval logic"
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }
