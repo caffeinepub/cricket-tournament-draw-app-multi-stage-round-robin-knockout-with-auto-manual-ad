@@ -16,6 +16,9 @@ export function generateTournament(
   // Track teams available for each stage
   let currentTeams = [...teams];
   
+  // Track cumulative group count for sequential naming
+  let groupNameOffset = 0;
+  
   for (let i = 0; i < roundRobinRounds.length; i++) {
     const roundConfig = roundRobinRounds[i];
     const stageNumber = roundConfig.roundNumber;
@@ -33,10 +36,13 @@ export function generateTournament(
       
       groups.push({
         id: `stage-${stageNumber}-group-${g}`,
-        name: generateGroupName(g),
+        name: generateGroupName(groupNameOffset + g),
         teams: groupTeams,
       });
     }
+    
+    // Update offset for next round
+    groupNameOffset += roundConfig.groupCount;
     
     // Generate matches for all groups
     const matches: Match[] = [];

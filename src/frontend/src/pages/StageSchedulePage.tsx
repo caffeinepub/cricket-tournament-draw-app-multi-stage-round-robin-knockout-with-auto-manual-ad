@@ -21,7 +21,8 @@ export default function StageSchedulePage() {
   const { stages, setCurrentView, reset } = useTournamentStore();
   const [showResetDialog, setShowResetDialog] = useState(false);
 
-  const stage1 = stages.find((s) => s.stageNumber === 1);
+  // Get all round-robin stages (sorted by stage number)
+  const roundRobinStages = stages.sort((a, b) => a.stageNumber - b.stageNumber);
 
   const handleViewSchedule = () => {
     setCurrentView('fullSchedule');
@@ -41,7 +42,7 @@ export default function StageSchedulePage() {
     toast.success('Tournament reset successfully');
   };
 
-  if (!stage1) {
+  if (roundRobinStages.length === 0) {
     return (
       <AppLayout>
         <div className="text-center py-12">
@@ -65,9 +66,9 @@ export default function StageSchedulePage() {
               <Calendar className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{stage1.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Round Robin Groups</h1>
               <p className="text-sm text-muted-foreground sm:text-base">
-                {stage1.groups.length} groups • Click team names to edit
+                {roundRobinStages.length} {roundRobinStages.length === 1 ? 'round' : 'rounds'} • Click to edit group and team names
               </p>
             </div>
           </div>
@@ -91,18 +92,20 @@ export default function StageSchedulePage() {
           </div>
         </div>
 
-        {/* Groups Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Group Assignments</CardTitle>
-            <CardDescription>
-              Edit team names by clicking on them. Changes are saved automatically.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RoundRobinGroupTable stage={stage1} />
-          </CardContent>
-        </Card>
+        {/* All Round Robin Stages */}
+        {roundRobinStages.map((stage) => (
+          <Card key={stage.id}>
+            <CardHeader>
+              <CardTitle>{stage.name}</CardTitle>
+              <CardDescription>
+                {stage.groups.length} groups • Edit group names by clicking on them. Changes are saved automatically.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RoundRobinGroupTable stage={stage} />
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Reset Confirmation Dialog */}

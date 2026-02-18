@@ -1,50 +1,95 @@
 {
   "kind": "build_request",
-  "title": "Fix knockout bracket match counts after Pre-Quarterfinal",
-  "projectName": "Tournament Scheduler",
+  "title": "Enforce unique sequential group letters across round-robin rounds + editable group names",
+  "projectName": "Tournament Builder",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
+      "text": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Pre q means 8 match\nQ means 4 match\nSemi means 2 match\nFinal means 1 match\nIts standard"
+          "Round 1 Group if 12 teams than A to L and round 2 group if 4 its also A to D but it should Be M to P"
         ]
       },
       "acceptanceCriteria": [
-        "When knockoutStages.preQuarterFinal, quarterFinal, semiFinal, and final are enabled and 16 real teams enter Pre-Quarterfinal, generateKnockoutMatches returns 8 Pre-Quarterfinal matches, 4 Quarterfinal matches, 2 Semifinal matches, and 1 Final match.",
-        "The teams carried forward between rounds represent winners only (i.e., after a round with N matches, the next round starts with N placeholder teams), so the next round match count is always half of the prior round’s match count.",
-        "KnockoutPage displays the corrected per-round match badges (e.g., Quarterfinal shows “4 matches”, Semifinal shows “2 matches”, Final shows “1 match”) for the same configuration.",
-        "The fix does not change qualification logic (which teams qualify) or round naming (Pre-Quarterfinal, Quarterfinal, Semifinal, Final) beyond correcting match counts."
+        "Given roundRobinRounds = [{roundNumber:1, groupCount:12},{roundNumber:2, groupCount:4}], generated stage-1 group names are A through L and generated stage-2 group names are M through P.",
+        "Group naming continues correctly across any number of rounds by offsetting the group-name index by the total number of groups in prior rounds.",
+        "No generated group name is duplicated across all generated stages."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "system assigned but user can change manually",
+          "Robin Round 2 Group Name should not repeated as a Is in robin round 1",
+          "2-Block"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Group headers in the round-robin groups UI can be switched into an editable state and saved by the user.",
+        "If the user attempts to rename a group to a name already used by any other group in any stage, the UI blocks the change and shows a clear English error message.",
+        "If the user renames a group to a unique value, the updated group name is reflected everywhere that group name is shown (e.g., group tables and schedule views) without requiring a regeneration reset."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "system assigned but user can change manually"
+        ]
+      },
+      "acceptanceCriteria": [
+        "There is a store action to update a specific group name identified by stageId and groupId.",
+        "Updating a group name updates the group in the relevant stage in state and causes React views using that state to re-render accordingly.",
+        "Existing behaviors for updating team names and team positions remain unchanged."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "and in robin round 2 group the same serial number as in group of robin round 1 and the same drop down to rearrange teams position"
+        ]
+      },
+      "acceptanceCriteria": [
+        "For any stage (including Robin Round 2), each team row shows a serial number in the format \"{groupName}-{position}\" consistent with Robin Round 1.",
+        "For any stage (including Robin Round 2), each team row includes the position dropdown and changing it reorders the teams within that group.",
+        "After a group rename, serial numbers update to use the new group name."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (read-only).",
-    "Keep all changes within the existing React + TypeScript frontend; no new backend dependencies or external services."
+    "Frontend files under frontend/src/components/ui and other paths listed in SYSTEM_CONTEXT.frontend.immutablePaths must not be edited directly; compose them instead.",
+    "Keep all backend logic in a single Motoko actor; do not introduce additional backend services. (No backend change is required for this request.)"
   ],
   "nonGoals": [
-    "Changing how teams qualify for knockout (advancement configuration rules).",
-    "Adding new knockout rounds or changing existing round names.",
-    "Implementing match result entry and propagation of actual winners through the bracket (beyond using TBD placeholders)."
+    "Implementing third-party authentication providers (only Internet Identity is supported).",
+    "Adding real-time multiplayer or websocket-based updates.",
+    "Persisting tournament state to the backend canister (this change should remain in the existing client-side store unless separately requested)."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

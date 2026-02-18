@@ -12,6 +12,7 @@ import {
 } from './types';
 import { generateTournament } from './generation';
 import { generateKnockoutMatches } from './knockoutGenerator';
+import { reorderGroupTeams } from './groupReorder';
 
 interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   setNumberOfTeams: (count: number) => void;
@@ -22,6 +23,8 @@ interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
   generateTournament: () => void;
   updateMatchDateTime: (matchId: string, date: string, time: string) => void;
   updateTeamName: (teamId: string, newName: string) => void;
+  updateTeamPosition: (stageId: string, groupId: string, teamId: string, position: number) => void;
+  updateGroupName: (stageId: string, groupId: string, newName: string) => { success: boolean; error?: string };
   setCurrentView: (view: 'setup' | 'schedule' | 'fullSchedule' | 'knockout') => void;
   setKnockoutPairingMode: (mode: KnockoutPairingMode) => void;
   assignKnockoutFixture: (assignment: KnockoutFixtureAssignment) => void;
@@ -29,8 +32,8 @@ interface TournamentStore extends Omit<TournamentState, 'advancementConfigs'> {
 }
 
 const initialState: Omit<TournamentState, 'advancementConfigs'> = {
-  numberOfTeams: 16,
-  roundRobinRounds: [{ roundNumber: 1, groupCount: 4 }],
+  numberOfTeams: 48,
+  roundRobinRounds: [{ roundNumber: 1, groupCount: 12 }],
   knockoutStages: {
     preQuarterFinal: false,
     quarterFinal: false,
@@ -166,6 +169,85 @@ export const useTournamentStore = create<TournamentStore>()(
           stages: updatedStages,
           knockoutMatches: updatedKnockoutMatches,
         });
+      },
+
+      updateTeamPosition: (stageId, groupId, teamId, position) => {
+        const { stages, knockoutStages, stageAdvancementConfigs, roundRobinRounds, knockoutPairingMode, knockoutFixtureAssignments } = get();
+
+        // Update the group's team order
+        const updatedStages = stages.map((stage) => {
+          if (stage.id !== stageId) return stage;
+
+          return {
+            ...stage,
+            groups: stage.groups.map((group) => {
+              if (group.id !== groupId) return group;
+
+              const reorderedTeams = reorderGroupTeams(group.teams, teamId, position);
+              return {
+                ...group,
+                teams: reorderedTeams,
+              };
+            }),
+          };
+        });
+
+        // Regenerate knockout matches to reflect new group ordering (winners/runner-ups)
+        const regeneratedKnockoutMatches = generateKnockoutMatches(
+          updatedStages,
+          knockoutStages,
+          stageAdvancementConfigs,
+          roundRobinRounds,
+          knockoutPairingMode,
+          knockoutFixtureAssignments
+        );
+
+        set({
+          stages: updatedStages,
+          knockoutMatches: regeneratedKnockoutMatches,
+        });
+      },
+
+      updateGroupName: (stageId, groupId, newName) => {
+        const { stages } = get();
+        
+        // Trim the new name
+        const trimmedName = newName.trim();
+        
+        if (!trimmedName) {
+          return { success: false, error: 'Group name cannot be empty' };
+        }
+        
+        // Check for duplicates across all stages (excluding the current group)
+        for (const stage of stages) {
+          for (const group of stage.groups) {
+            if (group.id !== groupId && group.name.toLowerCase() === trimmedName.toLowerCase()) {
+              return { 
+                success: false, 
+                error: `Group name "${trimmedName}" is already used in ${stage.name}` 
+              };
+            }
+          }
+        }
+        
+        // Update the group name
+        const updatedStages = stages.map((stage) => {
+          if (stage.id !== stageId) return stage;
+
+          return {
+            ...stage,
+            groups: stage.groups.map((group) => {
+              if (group.id !== groupId) return group;
+              return {
+                ...group,
+                name: trimmedName,
+              };
+            }),
+          };
+        });
+
+        set({ stages: updatedStages });
+        return { success: true };
       },
 
       setCurrentView: (view) => set({ currentView: view }),

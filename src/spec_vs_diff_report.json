@@ -1,14 +1,26 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T17:32:55.984Z",
-  "summary": "The diff updates knockout match generation to carry forward only winner placeholders between rounds, which halves the team pool each round and produces standard single-elimination match counts (8→4→2→1) after a Pre-Quarterfinal round.",
-  "missing_requirements": [],
+  "generatedAt": "2026-02-18T08:05:53.364Z",
+  "summary": "REQ-1 appears implemented via cumulative group-name offset during stage generation. REQ-2/REQ-3 appear implemented via an editable group header UI calling a new store action (updateGroupName) that returns success/error and shows toast feedback. REQ-4 cannot be fully verified from the provided truncated diff because the serial-number rendering format and presence of the position dropdown specifically for Robin Round 2 are not shown end-to-end (though updateTeamPosition + Select imports suggest the dropdown exists).",
+  "missing_requirements": [
+    {
+      "id": "REQ-4",
+      "requirement": "Ensure Robin Round 2 groups show the same team serial numbering format \"{groupName}-{position}\" and the same dropdown control to rearrange team positions as in Robin Round 1; and after a group rename, serial numbers update to use the new group name.",
+      "reason": "RoundRobinGroupTable.tsx is truncated before the team-row rendering portion; the diff summary shows position changing logic and Select imports, but does not provide direct evidence that (a) the serial string \"{groupName}-{position}\" is rendered for all stages including Round 2, and (b) the dropdown is present for all stages including Round 2, and (c) serials recompute based on renamed group name.",
+      "evidence": [
+        "frontend/src/components/RoundRobinGroupTable.tsx (truncated)"
+      ]
+    }
+  ],
   "hallucinated_features": [],
-  "confidence": 0.74,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/features/tournament/knockoutGenerator.ts",
+    "frontend/src/components/RoundRobinGroupTable.tsx",
+    "frontend/src/features/tournament/generation.ts",
+    "frontend/src/features/tournament/useTournamentStore.ts",
+    "frontend/src/pages/StageSchedulePage.tsx",
     "project_state.json"
   ]
 }

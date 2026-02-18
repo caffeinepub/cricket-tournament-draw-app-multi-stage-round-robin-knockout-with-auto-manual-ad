@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-knockout-bracket-generation-so-that-after-pre-quarterfinal-8-matches-subsequent-rounds-generate-the-standard-single-elimination-counts-quarterfinal-4-matches-semifinal-2-matches-final-1-match-instead-of-repeating-8-matches-each-round",
-      "featureTitle": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
+      "featureId": "feature-update-round-robin-stage-generation-so-group-letters-are-assigned-sequentially-across-rounds-e-g-if-robin-round-1-has-12-groups-a-l-then-robin-round-2-with-4-groups-must-be-m-p-rather-than-restarting-at-a-each-round",
+      "featureTitle": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
       "files": [
-        "frontend/src/features/tournament/knockoutGenerator.ts"
+        "frontend/src/features/tournament/generation.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -16,6 +16,61 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-the-ability-for-users-to-manually-rename-a-group-name-letter-in-the-round-robin-group-ui-while-blocking-any-rename-that-would-reuse-an-existing-group-name-used-anywhere-else-in-the-tournament-including-names-used-in-robin-round-1",
+      "featureTitle": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+      "files": [
+        "frontend/src/components/RoundRobinGroupTable.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-extend-the-tournament-client-state-store-with-an-action-to-update-a-group-name-by-stageid-groupid-and-ensure-downstream-displays-serial-numbers-schedules-reflect-the-updated-group-name",
+      "featureTitle": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+      "files": [
+        "frontend/src/features/tournament/useTournamentStore.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-robin-round-2-groups-show-the-same-team-serial-numbering-format-and-the-same-dropdown-control-to-rearrange-team-positions-as-in-robin-round-1",
+      "featureTitle": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
+      "files": [
+        "frontend/src/components/RoundRobinGroupTable.tsx",
+        "frontend/src/pages/StageSchedulePage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

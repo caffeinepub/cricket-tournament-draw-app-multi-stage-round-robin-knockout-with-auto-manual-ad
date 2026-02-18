@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTournamentStore } from '../features/tournament/useTournamentStore';
-import { validateNumberOfTeams, validateRoundConfig, validateAdvancementRuleCompatibility, getStageAdvancementLabel } from '../features/tournament/validation';
+import { validateNumberOfTeams, validateRoundConfig, validateAdvancementRuleCompatibility, formatDestination } from '../features/tournament/validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ export default function TournamentSetupPage() {
 
   const [teamCountInput, setTeamCountInput] = useState(numberOfTeams.toString());
   const [roundConfigs, setRoundConfigs] = useState<RoundRobinRoundConfig[]>(
-    roundRobinRounds.length > 0 ? roundRobinRounds : [{ roundNumber: 1, groupCount: 4 }]
+    roundRobinRounds.length > 0 ? roundRobinRounds : [{ roundNumber: 1, groupCount: 12 }]
   );
   // Track group count inputs as strings to allow temporary empty state
   const [groupCountInputs, setGroupCountInputs] = useState<Record<number, string>>(
@@ -307,46 +307,6 @@ export default function TournamentSetupPage() {
                 <CardDescription>Define how teams advance from each round-robin stage</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {roundConfigs.map((config) => {
-                  const stageConfig = stageAdvancementConfigs.find(c => c.stageNumber === config.roundNumber);
-                  const isConfigured = !!stageConfig;
-                  
-                  return (
-                    <div key={config.roundNumber} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">Robin Round {config.roundNumber}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {config.groupCount} groups
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenAdvancementDialog(config.roundNumber)}
-                        >
-                          <Settings className="h-4 w-4 mr-2" />
-                          Configure
-                        </Button>
-                      </div>
-                      {isConfigured ? (
-                        <div className="text-sm text-muted-foreground">
-                          {getStageAdvancementLabel(config.roundNumber, stageAdvancementConfigs)}
-                        </div>
-                      ) : (
-                        <Alert>
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            Not configured - please set advancement rules
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                  );
-                })}
-
-                <Separator />
-
                 <div className="space-y-3">
                   <Label>Knockout Stages</Label>
                   <div className="space-y-2">
@@ -358,9 +318,12 @@ export default function TournamentSetupPage() {
                           setKnockoutStages({ ...knockoutStages, preQuarterFinal: checked as boolean })
                         }
                       />
-                      <Label htmlFor="pre-quarter" className="text-sm font-normal cursor-pointer">
+                      <label
+                        htmlFor="pre-quarter"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         Pre-Quarterfinals (16 teams)
-                      </Label>
+                      </label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -370,9 +333,12 @@ export default function TournamentSetupPage() {
                           setKnockoutStages({ ...knockoutStages, quarterFinal: checked as boolean })
                         }
                       />
-                      <Label htmlFor="quarter" className="text-sm font-normal cursor-pointer">
+                      <label
+                        htmlFor="quarter"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         Quarterfinals (8 teams)
-                      </Label>
+                      </label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -382,9 +348,12 @@ export default function TournamentSetupPage() {
                           setKnockoutStages({ ...knockoutStages, semiFinal: checked as boolean })
                         }
                       />
-                      <Label htmlFor="semi" className="text-sm font-normal cursor-pointer">
+                      <label
+                        htmlFor="semi"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         Semifinals (4 teams)
-                      </Label>
+                      </label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -394,47 +363,52 @@ export default function TournamentSetupPage() {
                           setKnockoutStages({ ...knockoutStages, final: checked as boolean })
                         }
                       />
-                      <Label htmlFor="final" className="text-sm font-normal cursor-pointer">
+                      <label
+                        htmlFor="final"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         Final (2 teams)
-                      </Label>
+                      </label>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Generate Button */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {!isCompatible && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Configuration Mismatch</AlertTitle>
-                      <AlertDescription>
-                        Qualified teams ({qualifiedTeamCount}) don't match required teams ({requiredTeamCount}) for the selected knockout stages.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {isCompatible && qualifiedTeamCount > 0 && (
-                    <Alert>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <AlertTitle>Configuration Valid</AlertTitle>
-                      <AlertDescription>
-                        {qualifiedTeamCount} teams will advance to knockout stages.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                <Separator />
 
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <Button onClick={handleGenerate} className="flex-1" size="lg">
-                      <Trophy className="mr-2 h-5 w-5" />
-                      Generate Tournament
-                    </Button>
-                    <Button onClick={handleReset} variant="outline" size="lg">
-                      Reset
-                    </Button>
+                <div className="space-y-3">
+                  <Label>Robin Round Advancement</Label>
+                  <div className="space-y-2">
+                    {roundConfigs.map((config) => {
+                      const stageConfig = stageAdvancementConfigs.find(
+                        (c) => c.stageNumber === config.roundNumber
+                      );
+                      return (
+                        <div
+                          key={config.roundNumber}
+                          className="flex items-center justify-between rounded-lg border p-3"
+                        >
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium">Robin Round {config.roundNumber}</div>
+                            {stageConfig ? (
+                              <div className="text-xs text-muted-foreground">
+                                Winners: {formatDestination(stageConfig.winnerDestination)} •
+                                Runners-up: {formatDestination(stageConfig.runnerUpDestination)}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-muted-foreground">Not configured</div>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenAdvancementDialog(config.roundNumber)}
+                          >
+                            <Settings className="mr-2 h-4 w-4" />
+                            Configure
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </CardContent>
@@ -443,45 +417,72 @@ export default function TournamentSetupPage() {
 
           {/* Preview Panel */}
           <div className="space-y-6">
-            {roundConfigs.length > 1 && (
-              <Stage2GroupAssignmentPanel />
-            )}
+            {/* Stage Flow Preview */}
+            <Stage2GroupAssignmentPanel />
 
+            {/* Validation Status */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Info className="h-5 w-5" />
-                  Tournament Summary
-                </CardTitle>
+                <CardTitle>Validation Status</CardTitle>
+                <CardDescription>Check if your configuration is valid</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Teams:</span>
-                  <span className="font-medium">{numberOfTeams}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Robin Rounds:</span>
-                  <span className="font-medium">{roundConfigs.length}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Qualified for Knockout:</span>
-                  <span className="font-medium">{qualifiedTeamCount} teams</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Required for Knockout:</span>
-                  <span className="font-medium">{requiredTeamCount} teams</span>
-                </div>
+              <CardContent className="space-y-4">
+                {requiredTeamCount > 0 && (
+                  <Alert variant={isCompatible ? 'default' : 'destructive'}>
+                    {isCompatible ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4" />
+                    )}
+                    <AlertTitle>
+                      {isCompatible ? 'Configuration Valid' : 'Configuration Invalid'}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {isCompatible ? (
+                        <>
+                          Your advancement rules will qualify exactly {qualifiedTeamCount} teams for the
+                          knockout stage.
+                        </>
+                      ) : (
+                        <>
+                          Your advancement rules qualify {qualifiedTeamCount} teams, but the first enabled
+                          knockout stage requires {requiredTeamCount} teams. Please adjust your advancement
+                          rules or knockout stages.
+                        </>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {requiredTeamCount === 0 && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>No Knockout Stage</AlertTitle>
+                    <AlertDescription>
+                      Enable at least one knockout stage to complete your tournament structure.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button onClick={handleGenerate} className="flex-1" disabled={!isCompatible}>
+                {isGenerated ? 'Regenerate Tournament' : 'Generate Tournament'}
+              </Button>
+              {isGenerated && (
+                <Button onClick={handleReset} variant="outline">
+                  Reset
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Advancement Config Dialog */}
-      {showAdvancementDialog && selectedStageNumber !== null && (
+      {selectedStageNumber !== null && (
         <AdvancementConfigDialog
           open={showAdvancementDialog}
           onOpenChange={setShowAdvancementDialog}
@@ -496,14 +497,13 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Regenerate Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will overwrite your existing tournament data and any team name edits you've made. This action cannot be undone.
+              This will regenerate the tournament with your current configuration. All existing matches,
+              team names, and schedules will be reset. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRegenerate}>
-              Regenerate
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmRegenerate}>Regenerate</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -514,7 +514,8 @@ export default function TournamentSetupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Tournament?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will clear all tournament data and return to the setup screen. All your configurations and edits will be lost. This action cannot be undone.
+              This will completely reset the tournament, clearing all data including configuration,
+              matches, and schedules. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

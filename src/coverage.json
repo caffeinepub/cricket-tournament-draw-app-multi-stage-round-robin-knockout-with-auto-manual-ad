@@ -1,25 +1,60 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T17:32:55.986Z",
+  "generatedAt": "2026-02-18T08:05:53.367Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix knockout bracket generation so that after Pre-Quarterfinal (8 matches), subsequent rounds generate the standard single-elimination counts: Quarterfinal = 4 matches, Semifinal = 2 matches, Final = 1 match, instead of repeating 8 matches each round.",
+        "summary": "Update round-robin stage generation so group letters are assigned sequentially across rounds (e.g., if Robin Round 1 has 12 groups A–L, then Robin Round 2 with 4 groups must be M–P), rather than restarting at A each round.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/tournament/knockoutGenerator.ts",
-          "frontend/src/pages/KnockoutPage.tsx"
+          "frontend/src/features/tournament/generation.ts"
         ],
         "matchedFiles": [
-          "frontend/src/features/tournament/knockoutGenerator.ts"
+          "frontend/src/features/tournament/generation.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add the ability for users to manually rename a group name/letter in the round-robin group UI, while blocking any rename that would reuse an existing group name used anywhere else in the tournament (including names used in Robin Round 1).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/RoundRobinGroupTable.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/RoundRobinGroupTable.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Extend the tournament client state/store with an action to update a group name (by stageId + groupId) and ensure downstream displays (serial numbers, schedules) reflect the updated group name.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/tournament/useTournamentStore.ts",
+          "frontend/src/features/tournament/types.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/useTournamentStore.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Ensure Robin Round 2 groups show the same team serial numbering format and the same dropdown control to rearrange team positions as in Robin Round 1.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/StageSchedulePage.tsx",
+          "frontend/src/components/RoundRobinGroupTable.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/StageSchedulePage.tsx",
+          "frontend/src/components/RoundRobinGroupTable.tsx"
         ]
       }
     ]
@@ -29,7 +64,10 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/features/tournament/knockoutGenerator.ts",
+    "frontend/src/components/RoundRobinGroupTable.tsx",
+    "frontend/src/features/tournament/generation.ts",
+    "frontend/src/features/tournament/useTournamentStore.ts",
+    "frontend/src/pages/StageSchedulePage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

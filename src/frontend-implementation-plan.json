@@ -1,27 +1,79 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix knockout bracket match counts after Pre-Quarterfinal",
+  "title": "Tournament Builder: sequential group letters across rounds + unique editable group names",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Correct knockout bracket generation so each subsequent round halves the match count by carrying forward only winner placeholders (not full team slots), producing standard single-elimination counts and correct UI match badges.",
+      "summary": "Assign round-robin group letters sequentially across all rounds so later rounds continue from prior rounds’ last group.",
       "acceptanceCriteria": [
-        "When knockoutStages.preQuarterFinal, quarterFinal, semiFinal, and final are enabled and 16 real teams enter Pre-Quarterfinal, generateKnockoutMatches returns 8 Pre-Quarterfinal matches, 4 Quarterfinal matches, 2 Semifinal matches, and 1 Final match.",
-        "The teams carried forward between rounds represent winners only (i.e., after a round with N matches, the next round starts with N placeholder teams), so the next round match count is always half of the prior round’s match count.",
-        "KnockoutPage displays the corrected per-round match badges (e.g., Quarterfinal shows “4 matches”, Semifinal shows “2 matches”, Final shows “1 match”) for the same configuration.",
-        "The fix does not change qualification logic (which teams qualify) or round naming (Pre-Quarterfinal, Quarterfinal, Semifinal, Final) beyond correcting match counts."
+        "Given roundRobinRounds = [{roundNumber:1, groupCount:12},{roundNumber:2, groupCount:4}], generated stage-1 group names are A through L and generated stage-2 group names are M through P.",
+        "Group naming continues correctly across any number of rounds by offsetting the group-name index by the total number of groups in prior rounds.",
+        "No generated group name is duplicated across all generated stages."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/tournament/knockoutGenerator.ts",
+          "path": "frontend/src/features/tournament/generation.ts",
           "operation": "modify",
-          "description": "Fix round-to-round team carry-forward logic so that after generating a round with N matches, the next round starts with N placeholder 'winner' teams (not 2N), ensuring match counts halve each round (8→4→2→1) when all rounds are enabled. Update helper naming/comments as needed to reflect winner-placeholder semantics."
+          "description": "Update round-robin group creation to compute a running group-name offset (sum of groupCount from prior rounds) and call generateGroupName(offset + g) so group letters continue sequentially across stages."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Allow users to rename round-robin group names inline while preventing duplicates across the entire tournament and showing a clear error when blocked.",
+      "acceptanceCriteria": [
+        "Group headers in the round-robin groups UI can be switched into an editable state and saved by the user.",
+        "If the user attempts to rename a group to a name already used by any other group in any stage, the UI blocks the change and shows a clear English error message.",
+        "If the user renames a group to a unique value, the updated group name is reflected everywhere that group name is shown (e.g., group tables and schedule views) without requiring a regeneration reset."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
+          "operation": "modify",
+          "description": "Add an editable state for the group header (e.g., click-to-edit) and wire save/cancel interactions. Use shadcn-ui Input (and any needed composed controls) for the inline editor; Verify the component's usage instructions before implementing. On save, call the store group-rename action; if the new name conflicts with any existing group name in any stage, block the update and display a clear English error (e.g., via sonner toast)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add a client-store action to update a group name by stageId + groupId and ensure all dependent UI updates.",
+      "acceptanceCriteria": [
+        "There is a store action to update a specific group name identified by stageId and groupId.",
+        "Updating a group name updates the group in the relevant stage in state and causes React views using that state to re-render accordingly.",
+        "Existing behaviors for updating team names and team positions remain unchanged."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/tournament/useTournamentStore.ts",
+          "operation": "modify",
+          "description": "Add an updateGroupName(stageId, groupId, newName) action that updates the group name in the appropriate stage within state. Include a store-level uniqueness check against all group names across all stages (excluding the current group) and return a success/failure result (or equivalent) so the UI can block duplicates without requiring regeneration."
         },
         {
-          "path": "frontend/src/pages/KnockoutPage.tsx",
+          "path": "frontend/src/features/tournament/types.ts",
           "operation": "modify",
-          "description": "Confirm knockout round grouping and match-count badges rely on the generated match list and remain correct after the generator fix; make any minimal adjustments required so displayed per-round match counts reflect the corrected bracket output (no changes to round names or qualification logic)."
+          "description": "Update the TournamentStore/action typing as needed to include the new updateGroupName action and its return shape (if applicable), without changing existing team update and position reorder behaviors."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Ensure Round 2 (and any later round) group UI uses the same serial numbering and position-reorder dropdown as Round 1, and updates serials after group rename.",
+      "acceptanceCriteria": [
+        "For any stage (including Robin Round 2), each team row shows a serial number in the format \"{groupName}-{position}\" consistent with Robin Round 1.",
+        "For any stage (including Robin Round 2), each team row includes the position dropdown and changing it reorders the teams within that group.",
+        "After a group rename, serial numbers update to use the new group name."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/StageSchedulePage.tsx",
+          "operation": "modify",
+          "description": "Update the groups view to render the round-robin group UI for all generated round-robin stages (not only stageNumber===1), ensuring Robin Round 2 is shown using the existing RoundRobinGroupTable so it inherits the same serial-number format and position dropdown behavior."
+        },
+        {
+          "path": "frontend/src/components/RoundRobinGroupTable.tsx",
+          "operation": "modify",
+          "description": "Ensure the serial-number display remains derived from the live group.name value (\"{groupName}-{position}\") so renames immediately reflect in-row serial numbers for every stage."
         }
       ]
     }
