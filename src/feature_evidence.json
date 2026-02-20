@@ -2,10 +2,30 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-tournament-loading-functionality-in-tournamentlistdialog-so-that-when-a-user-loads-a-saved-tournament-from-the-manage-tournament-dialog-the-tournament-data-name-teams-groups-stages-advancement-configurations-properly-populates-on-the-tournament-setup-page-instead-of-staying-on-an-empty-existing-tournament-page",
-      "featureTitle": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
+      "featureId": "feature-update-the-tournament-loading-mechanism-in-tournamentlistdialog-to-ensure-that-when-a-user-clicks-load-on-a-saved-tournament-the-tournament-data-name-teams-groups-stages-advancement-configurations-properly-populates-and-displays-on-the-tournament-setup-page-instead-of-navigating-to-the-last-tournament-state",
+      "featureTitle": "Update the tournament loading mechanism in TournamentListDialog to ensure that when a user clicks 'Load' on a saved tournament, the tournament data (name, teams, groups, stages, advancement configurations) properly populates and displays on the tournament setup page instead of navigating to the last tournament state",
       "files": [
         "frontend/src/components/TournamentListDialog.tsx",
+        "frontend/src/components/UserTournamentCard.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-verify-that-the-tournament-deserialization-logic-in-usetournamentstore-correctly-updates-all-state-properties-when-loadtournamentfromview-is-called-ensuring-the-store-state-is-fully-synchronized-with-the-loaded-tournament-data-before-any-ui-rendering-occurs",
+      "featureTitle": "Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called, ensuring the store state is fully synchronized with the loaded tournament data before any UI rendering occurs",
+      "files": [
+        "frontend/src/features/tournament/deserialization.ts",
         "frontend/src/features/tournament/useTournamentStore.ts"
       ],
       "components": [
@@ -17,7 +37,7 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-3"
       ],
       "confidence": "high"
     }

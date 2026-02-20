@@ -1,5 +1,5 @@
 import type { TournamentView, StageType, AdvancementType } from '../../backend';
-import type { Stage, Group, Team, StageAdvancementConfig, RoundRobinRoundConfig, AdvancementDestination, KnockoutEntryPoint } from './types';
+import type { Stage, Group, Team, StageAdvancementConfig, RoundRobinRoundConfig, AdvancementDestination, KnockoutEntryPoint, KnockoutStage } from './types';
 
 export function deserializeTournament(tournamentView: TournamentView) {
   const { draws } = tournamentView;
@@ -14,6 +14,15 @@ export function deserializeTournament(tournamentView: TournamentView) {
   const stages: Stage[] = [];
   const stageAdvancementConfigs: StageAdvancementConfig[] = [];
   const roundRobinRounds: RoundRobinRoundConfig[] = [];
+  const roundRobinStageNumbers = new Set<number>();
+
+  // Track knockout stages that are configured
+  const knockoutStages: KnockoutStage = {
+    preQuarterFinal: false,
+    quarterFinal: false,
+    semiFinal: false,
+    final: false,
+  };
 
   draws.stages.forEach(([stageId, stageView]) => {
     const stageNumber = Number(stageId);
@@ -29,21 +38,69 @@ export function deserializeTournament(tournamentView: TournamentView) {
       };
       stageAdvancementConfigs.push(advancementConfig);
 
-      // Track round robin rounds
-      if (!roundRobinRounds.find(r => r.roundNumber === stageNumber)) {
-        roundRobinRounds.push({
-          roundNumber: stageNumber,
-          groupCount: 0, // Will be updated when we count groups
-        });
+      // Track round robin stage numbers
+      roundRobinStageNumbers.add(stageNumber);
+
+      // Detect knockout stages from advancement rules
+      if (advancementConfig.winnerDestination.type === 'KnockoutEntry') {
+        const entryPoint = advancementConfig.winnerDestination.entryPoint;
+        if (entryPoint === 'PreQuarterfinals') knockoutStages.preQuarterFinal = true;
+        if (entryPoint === 'Quarterfinals') knockoutStages.quarterFinal = true;
+        if (entryPoint === 'Semifinals') knockoutStages.semiFinal = true;
       }
+      if (advancementConfig.runnerUpDestination.type === 'KnockoutEntry') {
+        const entryPoint = advancementConfig.runnerUpDestination.entryPoint;
+        if (entryPoint === 'PreQuarterfinals') knockoutStages.preQuarterFinal = true;
+        if (entryPoint === 'Quarterfinals') knockoutStages.quarterFinal = true;
+        if (entryPoint === 'Semifinals') knockoutStages.semiFinal = true;
+      }
+    } else if (stageView.stageType.__kind__ === 'Knockout') {
+      // Knockout stage - always has semifinal and final
+      knockoutStages.semiFinal = true;
+      knockoutStages.final = true;
     }
   });
+
+  // Build roundRobinRounds from the stage numbers we found
+  const sortedStageNumbers = Array.from(roundRobinStageNumbers).sort((a, b) => a - b);
+  
+  // Count groups per stage by looking at group IDs
+  const groupCountPerStage = new Map<number, number>();
+  draws.groups.forEach(([groupId]) => {
+    // Group IDs are typically structured as stageNumber * 100 + groupIndex
+    // or we need to infer from the stage configs
+    // For now, we'll count all groups and divide by number of stages
+    const stageNum = Math.floor(Number(groupId) / 100);
+    if (roundRobinStageNumbers.has(stageNum)) {
+      groupCountPerStage.set(stageNum, (groupCountPerStage.get(stageNum) || 0) + 1);
+    }
+  });
+
+  // If we can't determine group counts per stage, use total groups divided by stages
+  const totalGroups = draws.groups.length;
+  const defaultGroupCount = sortedStageNumbers.length > 0 
+    ? Math.floor(totalGroups / sortedStageNumbers.length) 
+    : 12;
+
+  sortedStageNumbers.forEach(stageNum => {
+    roundRobinRounds.push({
+      roundNumber: stageNum,
+      groupCount: groupCountPerStage.get(stageNum) || defaultGroupCount,
+    });
+  });
+
+  // Calculate numberOfTeams from groups
+  // Assuming each group has the same number of teams, we can infer from total groups
+  // Default to 48 if we can't determine
+  const numberOfTeams = totalGroups > 0 ? totalGroups * 4 : 48;
 
   return {
     name: tournamentView.name,
     creationDate: tournamentView.creationDate,
     stageAdvancementConfigs,
-    roundRobinRounds,
+    roundRobinRounds: roundRobinRounds.length > 0 ? roundRobinRounds : [{ roundNumber: 1, groupCount: 12 }],
+    knockoutStages,
+    numberOfTeams,
     groupMap,
   };
 }

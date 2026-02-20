@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 5,
+  "projectStateVersion": 7,
   "summary": "Tournament management web app with create, save, view, edit, and delete functionality for cricket tournaments",
   "architectural_notes": [],
   "known_issues": [
     "Blank page issues occurring after deployments - may require Caffeine support investigation",
     "Delete button shows error 'failed to delete tournament' for all tournaments - fixed in latest build",
-    "Tournament loading shows success message but doesn't populate data on tournament page"
+    "Tournament loading shows success message but navigates to last tournament page instead of displaying newly loaded data"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -15,6 +15,22 @@
       "title": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
       "reqIds": [
         "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-tournament-loading-mechanism-in-tournamentlistdialog-to-ensure-that-when-a-user-clicks-load-on-a-saved-tournament-the-tournament-data-name-teams-groups-stages-advancement-configurations-properly-populates-and-displays-on-the-tournament-setup-page-instead-of-navigating-to-the-last-tournament-state",
+      "title": "Update the tournament loading mechanism in TournamentListDialog to ensure that when a user clicks 'Load' on a saved tournament, the tournament data (name, teams, groups, stages, advancement configurations) properly populates and displays on the tournament setup page instead of navigating to the last tournament state",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-verify-that-the-tournament-deserialization-logic-in-usetournamentstore-correctly-updates-all-state-properties-when-loadtournamentfromview-is-called-ensuring-the-store-state-is-fully-synchronized-with-the-loaded-tournament-data-before-any-ui-rendering-occurs",
+      "title": "Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called, ensuring the store state is fully synchronized with the loaded tournament data before any UI rendering occurs",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }

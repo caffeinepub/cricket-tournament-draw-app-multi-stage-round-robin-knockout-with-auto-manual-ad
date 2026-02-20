@@ -1,32 +1,55 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix tournament loading to populate data on tournament page",
+  "title": "Fix tournament loading to properly populate data on setup page",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Fix tournament loading to navigate to setup page and populate all tournament data when loading from TournamentListDialog",
+      "id": "REQ-2",
+      "summary": "Update the tournament loading mechanism in TournamentListDialog to ensure loaded tournament data properly populates and displays on the tournament setup page instead of navigating to the last tournament state",
       "acceptanceCriteria": [
-        "When loading a saved tournament from the Manage Tournament dialog, all tournament data (name, teams, groups, stages) populates on the tournament setup page",
-        "The tournament setup page displays the loaded tournament data in an editable state",
-        "The 'tournament loaded' success message appears only when the data is successfully populated",
-        "All tournament configuration fields reflect the loaded tournament's saved state"
+        "When a user clicks 'Load' on a tournament in the Manage Tournament dialog, the tournament setup page displays the loaded tournament's name",
+        "All team names from the loaded tournament appear in the setup page",
+        "All group configurations from the loaded tournament populate correctly",
+        "All stage configurations and advancement rules from the loaded tournament display properly",
+        "The page does not navigate to or show the previously created/loaded tournament state",
+        "Success message continues to appear when loading is successful"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TournamentListDialog.tsx",
+          "operation": "modify",
+          "description": "Modify the load tournament handler to ensure it sets currentView to 'setup' after successfully loading tournament data, preventing navigation to the last tournament state (schedule or knockout pages). Ensure the dialog closes only after the view state is updated."
+        },
+        {
+          "path": "frontend/src/components/UserTournamentCard.tsx",
+          "operation": "modify",
+          "description": "Update the load button handler in UserTournamentCard to call loadTournamentFromView from the store and then explicitly set currentView to 'setup' to ensure the setup page displays with the loaded tournament data. Verify proper sequencing of state updates."
+        },
+        {
+          "path": "frontend/src/pages/TournamentSetupPage.tsx",
+          "operation": "modify",
+          "description": "Ensure TournamentSetupPage properly reflects loaded tournament state from the store, including tournamentName, teamCount, groups, stages, knockoutStages, and advancement configurations. Verify all form inputs and configuration panels read from and display the current store state when the page renders after a load operation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called, ensuring the store state is fully synchronized with the loaded tournament data before any UI rendering occurs",
+      "acceptanceCriteria": [
+        "The loadTournamentFromView function in useTournamentStore completes all state updates synchronously or with proper sequencing",
+        "All tournament state properties (tournamentName, teamCount, groups, stages, knockoutStages, etc.) are set to the loaded tournament values",
+        "No race conditions exist between state updates and page rendering"
       ],
       "file_operations": [
         {
           "path": "frontend/src/features/tournament/useTournamentStore.ts",
           "operation": "modify",
-          "description": "Add view navigation to the loadTournament action by setting currentView to 'setup' after successfully loading and deserializing tournament data. This ensures users are taken to the tournament setup page where they can see and edit the loaded tournament configuration."
+          "description": "Review and update the loadTournamentFromView action to ensure it synchronously updates all tournament state properties (tournamentName, teamCount, teamNames, groups, stages, knockoutStages, knockoutTeamCount, advancement configurations) from the deserialized tournament view. Ensure the function sets all state atomically in a single batch to prevent partial updates or race conditions. Verify that the deserialization output is correctly mapped to all store state fields."
         },
         {
-          "path": "frontend/src/components/TournamentListDialog.tsx",
+          "path": "frontend/src/features/tournament/deserialization.ts",
           "operation": "modify",
-          "description": "Update the handleLoadTournament function to close the dialog after successfully loading a tournament. This prevents the dialog from remaining open and obscuring the newly loaded tournament data on the setup page."
-        },
-        {
-          "path": "frontend/src/pages/TournamentSetupPage.tsx",
-          "operation": "modify",
-          "description": "Verify that all form inputs (team count, round configs, group counts, advancement rules, knockout stages) properly reflect the loaded tournament state from useTournamentStore. Ensure the page correctly displays pre-populated data when navigated to via tournament loading."
+          "description": "Review the deserializeTournament function to ensure it correctly extracts and transforms all tournament data from TournamentView including groups, stages, advancement rules, and round-robin configurations. Verify that the returned tournament state object includes all necessary fields required by the store and matches the expected structure for proper setup page rendering."
         }
       ]
     }

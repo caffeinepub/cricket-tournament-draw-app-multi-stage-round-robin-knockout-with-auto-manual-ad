@@ -1,27 +1,40 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-20T04:24:15.673Z",
+  "generatedAt": "2026-02-20T04:37:19.119Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
+        "id": "REQ-2",
+        "summary": "Update the tournament loading mechanism in TournamentListDialog to ensure that when a user clicks 'Load' on a saved tournament, the tournament data (name, teams, groups, stages, advancement configurations) properly populates and displays on the tournament setup page instead of navigating to the last tournament state",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/tournament/useTournamentStore.ts",
           "frontend/src/components/TournamentListDialog.tsx",
+          "frontend/src/components/UserTournamentCard.tsx",
           "frontend/src/pages/TournamentSetupPage.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/components/TournamentListDialog.tsx",
+          "frontend/src/components/UserTournamentCard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called, ensuring the store state is fully synchronized with the loaded tournament data before any UI rendering occurs",
+        "status": "implemented",
+        "plannedFiles": [
           "frontend/src/features/tournament/useTournamentStore.ts",
-          "frontend/src/components/TournamentListDialog.tsx"
+          "frontend/src/features/tournament/deserialization.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/tournament/useTournamentStore.ts",
+          "frontend/src/features/tournament/deserialization.ts"
         ]
       }
     ]
@@ -33,6 +46,7 @@
     "frontend-implementation-plan.json",
     "frontend/src/components/TournamentListDialog.tsx",
     "frontend/src/components/UserTournamentCard.tsx",
+    "frontend/src/features/tournament/deserialization.ts",
     "frontend/src/features/tournament/useTournamentStore.ts",
     "project_state.json",
     "scratch/component-selection.json",

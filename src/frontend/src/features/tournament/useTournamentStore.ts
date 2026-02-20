@@ -462,11 +462,13 @@ export const useTournamentStore = create<TournamentStore>()(
           numberOfTeams,
         } = data;
         
+        // Set all state atomically to prevent race conditions
         set({
-          currentTournamentName: name,
-          stageAdvancementConfigs,
-          roundRobinRounds,
+          currentTournamentName: name || null,
+          numberOfTeams: numberOfTeams || 48,
+          roundRobinRounds: roundRobinRounds || [{ roundNumber: 1, groupCount: 12 }],
           knockoutStages: knockoutStages || initialState.knockoutStages,
+          stageAdvancementConfigs: stageAdvancementConfigs || [],
           teams: teams || [],
           stages: stages || [],
           knockoutMatches: knockoutMatches || [],
@@ -474,7 +476,6 @@ export const useTournamentStore = create<TournamentStore>()(
           knockoutPairingMode: knockoutPairingMode || 'auto',
           knockoutFixtureAssignments: knockoutFixtureAssignments || [],
           knockoutWinners: knockoutWinners || {},
-          numberOfTeams: numberOfTeams || 48,
           isGenerated: (stages && stages.length > 0) || false,
           currentView: 'setup',
         });

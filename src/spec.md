@@ -1,10 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix tournament loading so that saved tournament data properly populates on the tournament setup page.
+**Goal:** Fix tournament loading to properly populate data on the setup page instead of navigating to the last tournament state.
 
 **Planned changes:**
-- Fix the tournament loading flow in TournamentListDialog to ensure loaded tournament data (name, teams, groups, stages, advancement configurations) populates correctly on the tournament setup page
-- Ensure the tournament setup page displays loaded data in an editable state after loading
+- Update the tournament loading mechanism in TournamentListDialog to ensure loaded tournament data (name, teams, groups, stages, advancement configurations) properly populates the tournament setup page
+- Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called
+- Ensure all tournament state properties are synchronized with the loaded tournament data before UI rendering occurs
+- Eliminate any race conditions between state updates and page rendering
 
-**User-visible outcome:** When loading a saved tournament from the Manage Tournament dialog, users will see all tournament data populate on the setup page, allowing them to view and edit the loaded tournament configuration.
+**User-visible outcome:** When users click 'Load' on a saved tournament in the Manage Tournament dialog, the tournament setup page will display all the loaded tournament's data (name, teams, groups, stages, advancement rules) correctly instead of showing the previously created tournament state.

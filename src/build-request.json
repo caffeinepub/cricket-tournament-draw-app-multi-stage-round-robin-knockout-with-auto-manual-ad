@@ -1,43 +1,64 @@
 {
   "kind": "build_request",
-  "title": "Fix tournament loading to populate data on tournament page",
+  "title": "Fix tournament loading to properly populate data on setup page",
   "projectName": "Tournament Manager",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
+      "id": "REQ-2",
+      "text": "Update the tournament loading mechanism in TournamentListDialog to ensure that when a user clicks 'Load' on a saved tournament, the tournament data (name, teams, groups, stages, advancement configurations) properly populates and displays on the tournament setup page instead of navigating to the last tournament state",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-11",
-          "msg-12",
-          "msg-13"
+          "msg-10"
         ],
         "quotes": [
-          "tournament loaded but noting happened",
-          "existing tournament page shown not opening daved tournament",
-          "get a 'tournament loaded' success message, but the tournament data isn't actually populating on the tournament page"
+          "Not loading yet",
+          "last tournament page"
         ]
       },
       "acceptanceCriteria": [
-        "When loading a saved tournament from the Manage Tournament dialog, all tournament data (name, teams, groups, stages) populates on the tournament setup page",
-        "The tournament setup page displays the loaded tournament data in an editable state",
-        "The 'tournament loaded' success message appears only when the data is successfully populated",
-        "All tournament configuration fields reflect the loaded tournament's saved state"
+        "When a user clicks 'Load' on a tournament in the Manage Tournament dialog, the tournament setup page displays the loaded tournament's name",
+        "All team names from the loaded tournament appear in the setup page",
+        "All group configurations from the loaded tournament populate correctly",
+        "All stage configurations and advancement rules from the loaded tournament display properly",
+        "The page does not navigate to or show the previously created/loaded tournament state",
+        "Success message continues to appear when loading is successful"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Verify that the tournament deserialization logic in useTournamentStore correctly updates all state properties when loadTournamentFromView is called, ensuring the store state is fully synchronized with the loaded tournament data before any UI rendering occurs",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "Success message still shows when loading",
+          "last tournament page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The loadTournamentFromView function in useTournamentStore completes all state updates synchronously or with proper sequencing",
+        "All tournament state properties (tournamentName, teamCount, groups, stages, knockoutStages, etc.) are set to the loaded tournament values",
+        "No race conditions exist between state updates and page rendering"
       ]
     }
   ],
   "constraints": [
-    "Do not modify the backend tournament data structure or storage logic",
-    "Maintain the existing deserialization logic in frontend/src/features/tournament/deserialization.ts",
-    "Preserve the current tournament store state management patterns in useTournamentStore.ts"
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts",
+    "Do not modify frontend/src/hooks/useInternetIdentity.tsx",
+    "Do not modify frontend/src/hooks/useActor.ts",
+    "Do not modify frontend/src/main.tsx",
+    "Do not modify frontend/src/components/ui components",
+    "Maintain single-actor backend architecture in backend/main.mo"
   ],
   "nonGoals": [
-    "Changing the Manage Tournament dialog UI layout",
-    "Modifying the tournament save functionality",
-    "Altering the tournament deletion logic",
-    "Adding new tournament fields or data structures"
+    "Changing the backend tournament storage structure",
+    "Modifying the save tournament functionality",
+    "Adding new tournament features beyond loading fixes",
+    "Changing the UI design or layout of the tournament setup page"
   ],
   "imageRequirements": {
     "required": [],

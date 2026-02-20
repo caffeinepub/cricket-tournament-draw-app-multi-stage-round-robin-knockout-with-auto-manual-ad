@@ -14,7 +14,7 @@ interface UserTournamentCardProps {
 
 export default function UserTournamentCard({ id, tournament }: UserTournamentCardProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { loadTournamentFromBackend } = useTournamentStore();
+  const { loadTournamentFromBackend, setCurrentView } = useTournamentStore();
 
   const creationDate = new Date(Number(tournament.creationDate) / 1000000);
   const totalGroups = tournament.draws.groups.length;
@@ -25,6 +25,8 @@ export default function UserTournamentCard({ id, tournament }: UserTournamentCar
     try {
       const deserialized = deserializeTournament(tournament);
       loadTournamentFromBackend(deserialized);
+      // Explicitly set view to setup after loading
+      setCurrentView('setup');
       toast.success(`Tournament loaded: ${tournament.name}`);
     } catch (error) {
       console.error('Error loading tournament:', error);

@@ -25,7 +25,7 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
   const [selectedTournament, setSelectedTournament] = useState<{ id: bigint; name: string } | null>(null);
   const [loadingTournamentId, setLoadingTournamentId] = useState<string | null>(null);
 
-  const { loadTournamentFromBackend } = useTournamentStore();
+  const { loadTournamentFromBackend, setCurrentView } = useTournamentStore();
 
   const handleRename = async (id: bigint, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -53,6 +53,8 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
     try {
       const deserialized = deserializeTournament(tournament);
       loadTournamentFromBackend(deserialized);
+      // Explicitly set view to setup after loading
+      setCurrentView('setup');
       toast.success(`Tournament loaded: ${tournament.name}`);
       onOpenChange(false); // Close dialog after successful load
     } catch (error) {
