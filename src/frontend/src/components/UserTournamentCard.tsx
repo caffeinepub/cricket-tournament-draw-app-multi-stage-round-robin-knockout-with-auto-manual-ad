@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Users, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TournamentView } from '../backend';
-import { useGetTournament } from '../hooks/useQueries';
 import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { deserializeTournament } from '../features/tournament/deserialization';
 
@@ -15,8 +14,7 @@ interface UserTournamentCardProps {
 
 export default function UserTournamentCard({ id, tournament }: UserTournamentCardProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { setCurrentView } = useTournamentStore();
-  const getTournament = useGetTournament(null);
+  const { loadTournamentFromBackend } = useTournamentStore();
 
   const creationDate = new Date(Number(tournament.creationDate) / 1000000);
   const totalGroups = tournament.draws.groups.length;
@@ -25,21 +23,9 @@ export default function UserTournamentCard({ id, tournament }: UserTournamentCar
   const handleLoadTournament = async () => {
     setIsLoading(true);
     try {
-      const fullTournament = await getTournament.refetch();
-      
-      if (!fullTournament.data) {
-        toast.error('Failed to load tournament');
-        return;
-      }
-
-      const deserialized = deserializeTournament(fullTournament.data);
-      
-      // Load tournament data into store
-      const store = useTournamentStore.getState();
-      store.loadTournamentFromBackend(deserialized);
-      
-      toast.success(`Loaded tournament: ${tournament.name}`);
-      setCurrentView('schedule');
+      const deserialized = deserializeTournament(tournament);
+      loadTournamentFromBackend(deserialized);
+      toast.success(`Tournament loaded: ${tournament.name}`);
     } catch (error) {
       console.error('Error loading tournament:', error);
       toast.error('Failed to load tournament');

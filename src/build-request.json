@@ -1,73 +1,43 @@
 {
   "kind": "build_request",
-  "title": "Fix blank screen in tournament list display",
-  "priority": "high",
+  "title": "Fix tournament loading to populate data on tournament page",
+  "projectName": "Tournament Manager",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
+      "text": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-11",
+          "msg-12",
+          "msg-13"
         ],
         "quotes": [
-          "You are wasting my credit..again blank screen"
+          "tournament loaded but noting happened",
+          "existing tournament page shown not opening daved tournament",
+          "get a 'tournament loaded' success message, but the tournament data isn't actually populating on the tournament page"
         ]
       },
       "acceptanceCriteria": [
-        "Tournament list displays all saved tournaments when TournamentListDialog opens",
-        "No blank screen appears when viewing the tournament list",
-        "Tournament data loads successfully from the backend"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "Frontend is trying to fetch tournaments on load but may not be handling the response correctly",
-          "State management for loading/displaying tournaments may have an issue"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Tournament list state updates correctly when data is fetched",
-        "Loading states are handled properly during fetch operations",
-        "Error states are displayed if fetch fails"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "The clickable tournament names I just added might have broken the display logic"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Tournament names are visible in the list",
-        "Click handlers do not cause rendering failures",
-        "Tournament list remains functional whether names are clickable or not"
+        "When loading a saved tournament from the Manage Tournament dialog, all tournament data (name, teams, groups, stages) populates on the tournament setup page",
+        "The tournament setup page displays the loaded tournament data in an editable state",
+        "The 'tournament loaded' success message appears only when the data is successfully populated",
+        "All tournament configuration fields reflect the loaded tournament's saved state"
       ]
     }
   ],
   "constraints": [
-    "Do not modify the backend tournament data structure or API",
-    "Preserve existing tournament load functionality in UserTournamentCard component",
-    "Maintain compatibility with the tournament store and its state management"
+    "Do not modify the backend tournament data structure or storage logic",
+    "Maintain the existing deserialization logic in frontend/src/features/tournament/deserialization.ts",
+    "Preserve the current tournament store state management patterns in useTournamentStore.ts"
   ],
   "nonGoals": [
-    "Adding new tournament management features",
-    "Redesigning the tournament list UI layout",
-    "Modifying backend tournament retrieval logic"
+    "Changing the Manage Tournament dialog UI layout",
+    "Modifying the tournament save functionality",
+    "Altering the tournament deletion logic",
+    "Adding new tournament fields or data structures"
   ],
   "imageRequirements": {
     "required": [],

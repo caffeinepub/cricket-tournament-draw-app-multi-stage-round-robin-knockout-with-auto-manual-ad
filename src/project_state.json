@@ -1,42 +1,33 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "New project",
+  "projectStateVersion": 5,
+  "summary": "Tournament management web app with create, save, view, edit, and delete functionality for cricket tournaments",
   "architectural_notes": [],
   "known_issues": [
-    "Blank screen issue in Draft 47 - frontend tournament list not displaying",
-    "Clickable tournament names feature broke the display logic",
-    "Frontend state management issue preventing tournaments from loading correctly"
+    "Blank page issues occurring after deployments - may require Caffeine support investigation",
+    "Delete button shows error 'failed to delete tournament' for all tournaments - fixed in latest build",
+    "Tournament loading shows success message but doesn't populate data on tournament page"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-restore-the-working-tournament-list-display-from-draft-44-in-tournamentlistdialog-component-ensuring-tournaments-load-and-render-correctly-when-the-dialog-opens",
-      "title": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
+      "id": "feature-fix-the-tournament-loading-functionality-in-tournamentlistdialog-so-that-when-a-user-loads-a-saved-tournament-from-the-manage-tournament-dialog-the-tournament-data-name-teams-groups-stages-advancement-configurations-properly-populates-on-the-tournament-setup-page-instead-of-staying-on-an-empty-existing-tournament-page",
+      "title": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-fix-the-state-management-issue-in-tournamentlistdialog-that-prevents-tournaments-from-loading-correctly-on-page-load",
-      "title": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-or-fix-the-clickable-tournament-names-functionality-that-broke-the-display-in-draft-47-ensuring-it-does-not-interfere-with-the-tournament-list-rendering",
-      "title": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Fix blank screen in tournament list display",
+  "new_feature_requests": [
+    {
+      "id": "AR-5",
+      "summary": "Fix tournament loading functionality to properly populate tournament data on the page when loading from saved tournaments",
+      "reqIds": [],
+      "status": "in_progress"
+    }
+  ],
+  "projectName": "Add delete button with confirmation to tournament list",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the blank screen issue in the tournament list display and restore working functionality from Draft 44.
+**Goal:** Fix tournament loading so that saved tournament data properly populates on the tournament setup page.
 
 **Planned changes:**
-- Restore tournament list rendering in TournamentListDialog component to show all saved tournaments
-- Fix state management to correctly handle tournament data fetching and loading states
-- Remove or fix the clickable tournament names feature that broke the display logic in Draft 47
+- Fix the tournament loading flow in TournamentListDialog to ensure loaded tournament data (name, teams, groups, stages, advancement configurations) populates correctly on the tournament setup page
+- Ensure the tournament setup page displays loaded data in an editable state after loading
 
-**User-visible outcome:** Users can open the tournament list dialog and see all their saved tournaments displayed correctly without encountering a blank screen.
+**User-visible outcome:** When loading a saved tournament from the Manage Tournament dialog, users will see all tournament data populate on the setup page, allowing them to view and edit the loaded tournament configuration.

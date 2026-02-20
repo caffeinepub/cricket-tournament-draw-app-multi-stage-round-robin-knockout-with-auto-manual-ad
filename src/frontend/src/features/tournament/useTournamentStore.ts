@@ -447,14 +447,35 @@ export const useTournamentStore = create<TournamentStore>()(
       },
 
       loadTournamentFromBackend: (data) => {
-        const { name, stageAdvancementConfigs, roundRobinRounds } = data;
+        const { 
+          name, 
+          stageAdvancementConfigs, 
+          roundRobinRounds, 
+          knockoutStages,
+          teams,
+          stages,
+          knockoutMatches,
+          knockoutWarnings,
+          knockoutPairingMode,
+          knockoutFixtureAssignments,
+          knockoutWinners,
+          numberOfTeams,
+        } = data;
         
         set({
           currentTournamentName: name,
           stageAdvancementConfigs,
           roundRobinRounds,
-          numberOfTeams: 48, // Default, will be recalculated
-          isGenerated: false,
+          knockoutStages: knockoutStages || initialState.knockoutStages,
+          teams: teams || [],
+          stages: stages || [],
+          knockoutMatches: knockoutMatches || [],
+          knockoutWarnings: knockoutWarnings || initialState.knockoutWarnings,
+          knockoutPairingMode: knockoutPairingMode || 'auto',
+          knockoutFixtureAssignments: knockoutFixtureAssignments || [],
+          knockoutWinners: knockoutWinners || {},
+          numberOfTeams: numberOfTeams || 48,
+          isGenerated: (stages && stages.length > 0) || false,
           currentView: 'setup',
         });
       },

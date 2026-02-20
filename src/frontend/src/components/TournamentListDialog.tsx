@@ -8,8 +8,8 @@ import { useGetAllTournaments, useUpdateTournamentName } from '../hooks/useQueri
 import { useTournamentStore } from '../features/tournament/useTournamentStore';
 import { deserializeTournament } from '../features/tournament/deserialization';
 import DeleteTournamentDialog from './DeleteTournamentDialog';
-import { Loader2, Pencil, Trash2, FolderOpen, Check, X } from 'lucide-react';
-import { useActor } from '../hooks/useActor';
+import { Loader2, Pencil, Trash2, Check, X } from 'lucide-react';
+import type { TournamentView } from '../backend';
 
 interface TournamentListDialogProps {
   open: boolean;
@@ -18,7 +18,6 @@ interface TournamentListDialogProps {
 
 export default function TournamentListDialog({ open, onOpenChange }: TournamentListDialogProps) {
   const { data: tournaments, isLoading } = useGetAllTournaments();
-  const { actor } = useActor();
   const updateName = useUpdateTournamentName();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -26,9 +25,11 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
   const [selectedTournament, setSelectedTournament] = useState<{ id: bigint; name: string } | null>(null);
   const [loadingTournamentId, setLoadingTournamentId] = useState<string | null>(null);
 
-  const { loadTournamentFromBackend, setCurrentView } = useTournamentStore();
+  const { loadTournamentFromBackend } = useTournamentStore();
 
-  const handleRename = async (id: bigint) => {
+  const handleRename = async (id: bigint, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    
     if (!editingName.trim()) {
       toast.error('Tournament name cannot be empty');
       return;
@@ -45,30 +46,15 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
     }
   };
 
-  const handleLoad = async (id: bigint, name: string) => {
-    if (!actor) {
-      toast.error('Backend not initialized');
-      return;
-    }
-
+  const handleLoad = async (id: bigint, tournament: TournamentView, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    
     setLoadingTournamentId(id.toString());
     try {
-      // Fetch tournament data from backend
-      const tournamentView = await actor.getTournament(id);
-      
-      if (!tournamentView) {
-        toast.error('Tournament not found');
-        return;
-      }
-
-      const deserialized = deserializeTournament(tournamentView);
-
-      // Load into store
+      const deserialized = deserializeTournament(tournament);
       loadTournamentFromBackend(deserialized);
-
-      toast.success(`Loaded tournament: ${name}`);
-      setCurrentView('schedule');
-      onOpenChange(false);
+      toast.success(`Tournament loaded: ${tournament.name}`);
+      onOpenChange(false); // Close dialog after successful load
     } catch (error) {
       console.error('Error loading tournament:', error);
       toast.error('Failed to load tournament');
@@ -77,20 +63,22 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
     }
   };
 
-  const handleDeleteClick = (id: bigint, name: string) => {
+  const handleDelete = (id: bigint, name: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setSelectedTournament({ id, name });
     setDeleteDialogOpen(true);
   };
 
-  const formatDate = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1000000); // Convert nanoseconds to milliseconds
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const startEditing = (id: bigint, currentName: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingId(id.toString());
+    setEditingName(currentName);
+  };
+
+  const cancelEditing = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingId(null);
+    setEditingName('');
   };
 
   return (
@@ -100,39 +88,49 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
           <DialogHeader>
             <DialogTitle>Manage Tournaments</DialogTitle>
             <DialogDescription>
-              Load, rename, or delete your saved tournaments.
+              Load, rename, or delete your saved tournaments
             </DialogDescription>
           </DialogHeader>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : tournaments && tournaments.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Tournament Name</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tournaments.map(([id, tournament]) => (
-                  <TableRow key={id.toString()}>
+                  <TableRow
+                    key={id.toString()}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={(e) => handleLoad(id, tournament, e)}
+                  >
                     <TableCell>
                       {editingId === id.toString() ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <Input
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleRename(id);
+                              } else if (e.key === 'Escape') {
+                                cancelEditing();
+                              }
+                            }}
                             className="h-8"
                             autoFocus
                           />
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleRename(id)}
+                            onClick={(e) => handleRename(id, e)}
                             disabled={updateName.isPending}
                           >
                             <Check className="h-4 w-4" />
@@ -140,59 +138,37 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
-                              setEditingId(null);
-                              setEditingName('');
-                            }}
+                            onClick={cancelEditing}
                           >
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => handleLoad(id, tournament.name)}
-                          disabled={loadingTournamentId === id.toString()}
-                          className="font-medium text-left hover:text-primary hover:underline cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {tournament.name}
-                        </button>
+                        <span className="font-medium">{tournament.name}</span>
                       )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(tournament.creationDate)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleLoad(id, tournament.name)}
-                          disabled={loadingTournamentId === id.toString()}
-                        >
-                          {loadingTournamentId === id.toString() ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <FolderOpen className="h-4 w-4" />
-                          )}
-                          <span className="ml-2">Load</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingId(id.toString());
-                            setEditingName(tournament.name);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteClick(id, tournament.name)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {loadingTournamentId === id.toString() ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => startEditing(id, tournament.name, e)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => handleDelete(id, tournament.name, e)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -201,7 +177,7 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
             </Table>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No tournaments saved yet. Create and save your first tournament!
+              No tournaments saved yet
             </div>
           )}
         </DialogContent>
@@ -213,9 +189,6 @@ export default function TournamentListDialog({ open, onOpenChange }: TournamentL
           onOpenChange={setDeleteDialogOpen}
           tournamentId={selectedTournament.id}
           tournamentName={selectedTournament.name}
-          onDeleted={() => {
-            setSelectedTournament(null);
-          }}
         />
       )}
     </>

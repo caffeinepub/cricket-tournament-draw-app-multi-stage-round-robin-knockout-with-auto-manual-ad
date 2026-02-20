@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-restore-the-working-tournament-list-display-from-draft-44-in-tournamentlistdialog-component-ensuring-tournaments-load-and-render-correctly-when-the-dialog-opens",
-      "featureTitle": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
+      "featureId": "feature-fix-the-tournament-loading-functionality-in-tournamentlistdialog-so-that-when-a-user-loads-a-saved-tournament-from-the-manage-tournament-dialog-the-tournament-data-name-teams-groups-stages-advancement-configurations-properly-populates-on-the-tournament-setup-page-instead-of-staying-on-an-empty-existing-tournament-page",
+      "featureTitle": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
       "files": [
-        "frontend/src/components/TournamentListDialog.tsx"
+        "frontend/src/components/TournamentListDialog.tsx",
+        "frontend/src/features/tournament/useTournamentStore.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -17,44 +18,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-state-management-issue-in-tournamentlistdialog-that-prevents-tournaments-from-loading-correctly-on-page-load",
-      "featureTitle": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
-      "files": [
-        "frontend/src/components/TournamentListDialog.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-remove-or-fix-the-clickable-tournament-names-functionality-that-broke-the-display-in-draft-47-ensuring-it-does-not-interfere-with-the-tournament-list-rendering",
-      "featureTitle": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
-      "files": [
-        "frontend/src/components/TournamentListDialog.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

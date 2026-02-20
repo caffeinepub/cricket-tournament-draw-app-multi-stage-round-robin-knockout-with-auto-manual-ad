@@ -1,63 +1,32 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix blank screen in tournament list display",
+  "title": "Fix tournament loading to populate data on tournament page",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Restore working tournament list display in TournamentListDialog, ensuring tournaments load and render correctly when dialog opens",
+      "summary": "Fix tournament loading to navigate to setup page and populate all tournament data when loading from TournamentListDialog",
       "acceptanceCriteria": [
-        "Tournament list displays all saved tournaments when TournamentListDialog opens",
-        "No blank screen appears when viewing the tournament list",
-        "Tournament data loads successfully from the backend"
+        "When loading a saved tournament from the Manage Tournament dialog, all tournament data (name, teams, groups, stages) populates on the tournament setup page",
+        "The tournament setup page displays the loaded tournament data in an editable state",
+        "The 'tournament loaded' success message appears only when the data is successfully populated",
+        "All tournament configuration fields reflect the loaded tournament's saved state"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TournamentListDialog.tsx",
+          "path": "frontend/src/features/tournament/useTournamentStore.ts",
           "operation": "modify",
-          "description": "Fix the tournament list rendering by ensuring the getAllTournaments query is properly enabled when the dialog is open, tournaments data is correctly mapped to the UI list, and loading/error states are handled appropriately. Verify that the tournament list container has proper visibility and that tournament items render with name, date, and action buttons visible."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Fix state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
-      "acceptanceCriteria": [
-        "Tournament list state updates correctly when data is fetched",
-        "Loading states are handled properly during fetch operations",
-        "Error states are displayed if fetch fails"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/TournamentListDialog.tsx",
-          "operation": "modify",
-          "description": "Ensure the useGetAllTournaments hook is properly configured with the correct enabled condition (dialog open state), handle the loading state by displaying a loading spinner or skeleton, and show appropriate error messages when the fetch fails. Verify that the tournament array state updates correctly when new data arrives from the backend."
+          "description": "Add view navigation to the loadTournament action by setting currentView to 'setup' after successfully loading and deserializing tournament data. This ensures users are taken to the tournament setup page where they can see and edit the loaded tournament configuration."
         },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Review and fix the useGetAllTournaments query hook to ensure it correctly returns loading, error, and data states. Verify the queryFn properly calls actor.getAllTournaments() and handles the response array of [bigint, TournamentView] tuples correctly."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Remove or fix clickable tournament names functionality that broke the display, ensuring it does not interfere with tournament list rendering",
-      "acceptanceCriteria": [
-        "Tournament names are visible in the list",
-        "Click handlers do not cause rendering failures",
-        "Tournament list remains functional whether names are clickable or not"
-      ],
-      "file_operations": [
-        {
           "path": "frontend/src/components/TournamentListDialog.tsx",
           "operation": "modify",
-          "description": "Review any click handlers attached to tournament name elements and ensure they do not prevent the list from rendering. If tournament names were made clickable in Draft 47, either remove the click handler or ensure it's properly wrapped to prevent event propagation issues. Verify that tournament name rendering works whether clickable or static."
+          "description": "Update the handleLoadTournament function to close the dialog after successfully loading a tournament. This prevents the dialog from remaining open and obscuring the newly loaded tournament data on the setup page."
         },
         {
-          "path": "frontend/src/components/UserTournamentCard.tsx",
+          "path": "frontend/src/pages/TournamentSetupPage.tsx",
           "operation": "modify",
-          "description": "Verify that the UserTournamentCard component's load functionality is working correctly and not interfering with the TournamentListDialog. Ensure the loadTournament backend call and store update logic functions properly when a tournament is selected from the list."
+          "description": "Verify that all form inputs (team count, round configs, group counts, advancement rules, knockout stages) properly reflect the loaded tournament state from useTournamentStore. Ensure the page correctly displays pre-populated data when navigated to via tournament loading."
         }
       ]
     }

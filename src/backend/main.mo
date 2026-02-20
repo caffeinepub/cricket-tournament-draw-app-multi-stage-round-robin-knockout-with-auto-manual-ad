@@ -51,6 +51,7 @@ actor {
     name : Text;
     creationDate : Time.Time;
     draws : Draws;
+    owner : ?Principal; // Make owner optional to avoid migration issues
   };
 
   // Immutable "View" types for public API
@@ -64,6 +65,7 @@ actor {
     name : Text;
     creationDate : Time.Time;
     draws : DrawsView;
+    owner : ?Principal;
   };
 
   type UserProfile = {
@@ -93,6 +95,15 @@ actor {
       name = tournament.name;
       creationDate = tournament.creationDate;
       draws = toDrawsView(tournament.draws);
+      owner = tournament.owner;
+    };
+  };
+
+  // Helper to check if caller owns tournament or is admin
+  func canModifyTournament(caller : Principal, tournament : Tournament) : Bool {
+    switch (tournament.owner) {
+      case (?owner) { caller == owner or AccessControl.isAdmin(accessControlState, caller) };
+      case (null) { false };
     };
   };
 
@@ -107,6 +118,7 @@ actor {
         groups = Map.empty<Nat, Text>();
         stages = Map.empty<Nat, Stage>();
       };
+      owner = ?caller;
     };
     tournaments.add(id, tournament);
   };
@@ -118,6 +130,9 @@ actor {
     switch (tournaments.get(id)) {
       case (null) { false };
       case (?tournament) {
+        if (not canModifyTournament(caller, tournament)) {
+          Runtime.trap("Unauthorized: Can only modify your own tournaments");
+        };
         let updatedTournament : Tournament = {
           tournament with name = newName;
         };
@@ -134,6 +149,9 @@ actor {
     switch (tournaments.get(tournamentId)) {
       case (null) { false };
       case (?tournament) {
+        if (not canModifyTournament(caller, tournament)) {
+          Runtime.trap("Unauthorized: Can only modify your own tournaments");
+        };
         tournament.draws.groups.add(groupId, groupName);
         true;
       };
@@ -152,6 +170,9 @@ actor {
     switch (tournaments.get(tournamentId)) {
       case (null) { false };
       case (?tournament) {
+        if (not canModifyTournament(caller, tournament)) {
+          Runtime.trap("Unauthorized: Can only modify your own tournaments");
+        };
         let stage : Stage = {
           id = stageId;
           name;
@@ -182,7 +203,10 @@ actor {
     };
     switch (tournaments.get(id)) {
       case (null) { false };
-      case (?_tournament) {
+      case (?tournament) {
+        if (not canModifyTournament(caller, tournament)) {
+          Runtime.trap("Unauthorized: Can only delete your own tournaments");
+        };
         tournaments.remove(id);
         true;
       };
@@ -190,8 +214,8 @@ actor {
   };
 
   public shared ({ caller }) func addGroupToAllTournaments(groupId : Nat, groupName : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can modify tournaments");
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can modify all tournaments");
     };
     let tournamentIds = tournaments.keys().toArray();
     for (id in tournamentIds.values()) {
@@ -205,8 +229,8 @@ actor {
   };
 
   public shared ({ caller }) func addStageToAllTournaments(stageId : Nat, name : Text, stageType : StageType) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can modify tournaments");
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can modify all tournaments");
     };
     let tournamentIds = tournaments.keys().toArray();
     for (id in tournamentIds.values()) {

@@ -33,6 +33,7 @@ export interface StageView {
 }
 export type Time = bigint;
 export interface TournamentView {
+  'owner' : [] | [Principal],
   'name' : string,
   'creationDate' : Time,
   'draws' : DrawsView,

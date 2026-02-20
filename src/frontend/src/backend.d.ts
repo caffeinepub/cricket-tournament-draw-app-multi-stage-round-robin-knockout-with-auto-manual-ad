@@ -9,6 +9,7 @@ export interface None {
 export type Option<T> = Some<T> | None;
 export type Time = bigint;
 export interface TournamentView {
+    owner?: Principal;
     name: string;
     creationDate: Time;
     draws: DrawsView;

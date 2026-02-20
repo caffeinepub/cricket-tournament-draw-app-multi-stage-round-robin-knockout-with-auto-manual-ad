@@ -1,47 +1,26 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T19:08:21.348Z",
+  "generatedAt": "2026-02-20T04:24:15.673Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Restore the working tournament list display from Draft 44 in TournamentListDialog component, ensuring tournaments load and render correctly when the dialog opens",
+        "summary": "Fix the tournament loading functionality in TournamentListDialog so that when a user loads a saved tournament from the Manage Tournament dialog, the tournament data (name, teams, groups, stages, advancement configurations) properly populates on the tournament setup page instead of staying on an empty/existing tournament page",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TournamentListDialog.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/TournamentListDialog.tsx"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Fix the state management issue in TournamentListDialog that prevents tournaments from loading correctly on page load",
-        "status": "implemented",
-        "plannedFiles": [
+          "frontend/src/features/tournament/useTournamentStore.ts",
           "frontend/src/components/TournamentListDialog.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/pages/TournamentSetupPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/TournamentListDialog.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Remove or fix the clickable tournament names functionality that broke the display in Draft 47, ensuring it does not interfere with the tournament list rendering",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/TournamentListDialog.tsx",
-          "frontend/src/components/UserTournamentCard.tsx"
-        ],
-        "matchedFiles": [
+          "frontend/src/features/tournament/useTournamentStore.ts",
           "frontend/src/components/TournamentListDialog.tsx"
         ]
       }
@@ -53,6 +32,8 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/TournamentListDialog.tsx",
+    "frontend/src/components/UserTournamentCard.tsx",
+    "frontend/src/features/tournament/useTournamentStore.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

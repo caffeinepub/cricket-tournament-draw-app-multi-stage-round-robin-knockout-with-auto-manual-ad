@@ -42,6 +42,7 @@ export const DrawsView = IDL.Record({
   'groups' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Text)),
 });
 export const TournamentView = IDL.Record({
+  'owner' : IDL.Opt(IDL.Principal),
   'name' : IDL.Text,
   'creationDate' : Time,
   'draws' : DrawsView,
@@ -128,6 +129,7 @@ export const idlFactory = ({ IDL }) => {
     'groups' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Text)),
   });
   const TournamentView = IDL.Record({
+    'owner' : IDL.Opt(IDL.Principal),
     'name' : IDL.Text,
     'creationDate' : Time,
     'draws' : DrawsView,
